@@ -18,7 +18,6 @@ if __name__ == '__main__':
     ev = oaf.get_conf()
     filename = oaf.get_hdf_filename(ev)
     print('Filename:', filename)
-    to_ns = 1000*1000*1000
     with h5py.File(filename, 'r') as f:
         tf = f.attrs['LastRun']
         ts = f['date'][:]
