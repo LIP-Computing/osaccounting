@@ -6,9 +6,9 @@
 #
 # Author: Mario David <mariojmdavid@gmail.com>
 #
-"""Send metric to influxdb
+"""Monthly resource usage for all projects
 """
-import os
+
 import datetime
 import dateutil.parser
 import h5py
