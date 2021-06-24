@@ -10,7 +10,8 @@
 """
 
 import csv
-import pprint
+from tabulate import tabulate
+
 
 if __name__ == '__main__':
     base_fname = 'cloud-monthly-'
@@ -35,14 +36,34 @@ if __name__ == '__main__':
                 if row['project'] not in p_row:
                     p_row.append(row['project'])
 
-    first_raw = ['Month Year'] + sorted(p_row)
-    pprint.pprint(praw.sort())
+    # VCPU*hour
+    first_raw = ['Month_Year'] + sorted(p_row)
+    all_rows_vcpus = [p_row]
+    for my in month_year:
+        n_row = [my]
+        fname = base_fname + my + ext_fname
+        with open(fname, 'r') as csvin:
+            reader = csv.DictReader(csvin)
+            for row in reader:
+                n_row.append(row['vcpus*hour'])
 
+        all_rows_vcpus.append(n_row)
 
-    # for my in month_year:
-    #     fname = base_fname + my + ext_fname
-    #     with open(fname, 'r') as csvin:
-    #         reader = csv.DictReader(csvin)
-    #         for row in reader:
-    #             print(my, row['project'], row['vcpus*hour'])
+    print(tabulate(all_rows_vcpus, headers='firstrow', tablefmt='fancy_grid'))
+
+    # Storage TB*month
+    all_rows_stor = [p_row]
+    for my in month_year:
+        n_row = [my]
+        fname = base_fname + my + ext_fname
+        with open(fname, 'r') as csvin:
+            reader = csv.DictReader(csvin)
+            for row in reader:
+                stor_tbmonth = row['volume_gb*hour']
+                n_row.append(row['volume_gb*hour'])
+
+        all_rows_stor.append(n_row)
+
+    print(tabulate(all_rows_stor, headers='firstrow', tablefmt='fancy_grid'))
+
 
