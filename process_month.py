@@ -59,11 +59,9 @@ if __name__ == '__main__':
         with open(fname, 'r') as csvin:
             reader = csv.DictReader(csvin)
             for row in reader:
-                stor_tbmonth = row['volume_gb*hour']
-                n_row.append(row['volume_gb*hour'])
+                stor_tbmonth = float(row['volume_gb*hour'])/720.0/1024.0
+                n_row.append(stor_tbmonth)
 
         all_rows_stor.append(n_row)
 
     print(tabulate(all_rows_stor, headers='firstrow', tablefmt='fancy_grid'))
-
-
