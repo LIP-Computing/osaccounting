@@ -61,13 +61,12 @@ if __name__ == '__main__':
         n_row = [my]
         (y_str, m_str) = my.split('-')
         (day_ini, day_end) = monthrange(int(y_str), int(m_str))
-        print(day_ini, day_end, my)
         fname = base_fname + my + ext_fname
         with open(fname, 'r') as csvin:
             reader = csv.DictReader(csvin)
             for row in reader:
-                stor_tbmonth = float(row['volume_gb*hour'])/day_end/1024.0
-                n_row.append(stor_tbmonth)
+                stor_tbmonth = float(row['volume_gb*hour'])/day_end/24/1024.0
+                n_row.append(str(stor_tbmonth))
 
         all_rows_stor.append(n_row)
 
