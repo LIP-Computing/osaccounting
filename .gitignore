@@ -117,3 +117,10 @@ ENV/
 # Eclipse
 .project
 .pydevproject
+
+# VSCode
+.vscode
+
+# Others
+osinfo.md
+usersall.csv

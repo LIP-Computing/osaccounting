@@ -21,7 +21,8 @@ import json
 import math
 
 # List of metrics
-METRICS = ['vcpus', 'mem_mb', 'disk_gb', 'volume_gb', 'ninstances', 'nvolumes', 'npublic_ips']
+METRICS = ['vcpus', 'mem_mb', 'volume_gb',
+           'ninstances', 'nvolumes', 'npublic_ips']
 
 
 def get_conf():
@@ -76,45 +77,33 @@ def get_years(ev):
     return list(range(ev['year_ini'], tf.year + 1))
 
 
-def get_hdf_filename(ev, year):
+def get_hdf_filename(ev):
     """Get the HDF5 filename
     :param ev: configuration options
-    :param year: Year
     :return (string) filename
     """
-    return ev['out_dir'] + os.sep + str(year) + '.hdf'
+    return ev['out_dir'] + os.sep + 'osacc.hdf'
 
-
-def exists_hdf(ev, year):
-    """Checks if hdf5 file exists
-    :param ev: configuration options
-    :param year: Year
-    :return (boolean) true is file exists or false if it doesn't
-    """
-    return os.path.exists(get_hdf_filename(ev, year))
-
-
-def create_hdf_year(ev, year):
-    """Initial creation of hdf5 files containing the time_series dataset
-    One file is created per year
+def create_hdf(ev, year):
+    """Initial creation of hdf5 file containing the time_series dataset
+    The file is for 10 years
     :param ev: configuration options
     :param year: Year
     :return (string) file_name
     """
     di = to_secepoc(datetime.datetime(year, 1, 1, 0, 0, 0))
-    df = to_secepoc(datetime.datetime(year+1, 1, 1, 0, 0, 0))
+    df = to_secepoc(datetime.datetime(year+10, 1, 1, 0, 0, 0))
     if year == ev['year_ini']:
         di = ev['secepoc_ini']
 
     ts = time_series(ev, di, df)
-    file_name = get_hdf_filename(ev, year)
+    file_name = ev['out_dir'] + os.sep + 'osacc.hdf'
     with h5py.File(file_name, 'w') as f:
         f.create_dataset('date', data=ts, compression="gzip")
         f.attrs['LastRun'] = di
         f.attrs['LastRunUTC'] = str(to_isodate(di))
 
     return file_name
-
 
 def create_proj_datasets(ev, year, proj_id, p_dict):
     """Initial creation of metrics hdf5 dataset containing 1 group per project and datasets
@@ -131,12 +120,12 @@ def create_proj_datasets(ev, year, proj_id, p_dict):
     :return (string) file_name
     """
     di = to_secepoc(datetime.datetime(year, 1, 1, 0, 0, 0))
-    df = to_secepoc(datetime.datetime(year+1, 1, 1, 0, 0, 0))
+    df = to_secepoc(datetime.datetime(year+10, 1, 1, 0, 0, 0))
     if year == ev['year_ini']:
         di = ev['secepoc_ini']
 
     ts = time_series(ev, di, df)
-    file_name = get_hdf_filename(ev, year)
+    file_name = get_hdf_filename(ev)
     grp_name = p_dict[proj_id][0]
     with h5py.File(file_name, 'r+') as f:
         grp = f.create_group(grp_name)
@@ -211,7 +200,7 @@ def db_conn(database):
                                    db=database)
 
 
-def get_list_db(ti, database, state):
+def get_list_db(ti, database, dbtable, state):
     """Get the list of rows of table from database
     Query keystone, nova or cinder to get projects or instances or volumes
     For projects (do not take into account admin and service projects)
@@ -220,6 +209,7 @@ def get_list_db(ti, database, state):
     DB = nova     -> Table = instances and instance_info_caches
     :param ti: Initial Date Time in seconds to epoc
     :param database: Database name
+    :param dbtable: Database table name
     :param state: one of the two values - `init` accounting (default), `upd` update
     :return (json dict): List of rows of a table in the database
     """
@@ -234,27 +224,37 @@ def get_list_db(ti, database, state):
         cnd_state = " AND deleted_at >= '%s'" % dtlocal_i
         cnd_state_nova = " AND instances.deleted_at > '%s'" % dtlocal_i
 
-    dbtable = "project"
+    # Case for projects in keystone
     table_str = "id,name,description,enabled"
-    condition = "domain_id='default' AND name!='admin' AND name!='service'"
-    if database == "cinder":
-        dbtable = "volumes"
-        table_str = "created_at,deleted_at,deleted,id,user_id,project_id,size,status"
-        condition = "(status = 'available' OR status = 'in-use') OR (status = 'deleted'" + cnd_state + ")"
-
     table_coll = table_str.split(",")
+    cond = "domain_id='default' AND name!='admin' AND name!='service' AND enabled='1'"
+    condition = cond + " ORDER BY name"
+
+    # Case for volumes and snapshots in cinder
+    if database == "cinder":
+        table_coll = ['created_at', 'deleted_at', 'id', 'project_id',
+                      'size', 'status']
+        if dbtable == "volumes":
+            table_str = "created_at,deleted_at,id,project_id,size,status"
+            condition = "(status = 'available' OR status = 'in-use') OR (status = 'deleted'" + cnd_state + ")"
+        if dbtable == "snapshots":
+            table_str = "created_at,deleted_at,id,project_id,volume_size,status"
+            condition = "status = 'available' OR (status = 'deleted'" + cnd_state + ")"
+
     query = ' '.join((
         "SELECT " + table_str,
         "FROM " + dbtable,
         "WHERE " + condition
     ))
+
+    # Case for instances and fip in nova
     if database == "nova":
         table_coll = ['uuid', 'created_at', 'deleted_at', 'id', 'project_id',
-                      'vm_state', 'memory_mb', 'vcpus', 'root_gb', 'network_info']
-        dbtable = "instances"
+                      'vm_state', 'memory_mb', 'vcpus', 'network_info']
         table_str = "instances.uuid,instances.created_at,instances.deleted_at," \
-                    "instances.id,instances.project_id,instances.vm_state,instances.memory_mb," \
-                    "instances.vcpus,instances.root_gb,instance_info_caches.network_info"
+                    "instances.id,instances.project_id,instances.vm_state," \
+                    "instances.memory_mb," \
+                    "instances.vcpus,instance_info_caches.network_info"
         ijoin = "instance_info_caches ON uuid=instance_info_caches.instance_uuid"
         condition = "(instances.vm_state = 'active' OR instances.vm_state = 'stopped') OR " \
                     "(instances.vm_state = 'deleted'" + cnd_state_nova + ")"
@@ -264,6 +264,35 @@ def get_list_db(ti, database, state):
             "INNER JOIN " + ijoin,
             "WHERE " + condition
         ))
+
+    return get_table_rows(database, query, table_coll)
+
+
+def get_quotas(database):
+    """Get quotas of metrics from database per project
+    returns a list of dict() of the form
+    [{'quota_name': 'ram', 'project_id': '123', 'quota_value': '1024'},]
+    :param database: database name
+    :return:
+    """
+    dbtable = "quotas"
+    table_str = "id,project_id,resource,hard_limit"
+    if database == "cinder":
+        condition = "(resource = 'gigabytes' OR resource = 'volumes' OR resource = 'snapshots')"
+
+    if database == "nova_api":
+        condition = "resource = 'cores' OR resource = 'ram' OR resource = 'instances'"
+
+    if database == "neutron":
+        table_str = "*"
+        condition = "resource = 'floatingip'"
+
+    table_coll = ['id', 'project_id', 'quota_name', 'quota_value']
+    query = ' '.join((
+        "SELECT " + table_str,
+        "FROM " + dbtable,
+        "WHERE " + condition
+    ))
 
     return get_table_rows(database, query, table_coll)
 
@@ -299,7 +328,7 @@ def get_projects(di, state):
     :param state: Either ``init`` or ``upd`` of accounting
     :return: dictionary with keystone projects
     """
-    projects = get_list_db(di, "keystone", state)
+    projects = get_list_db(di, "keystone", "project", state)
     p_dict = dict()
     for proj in projects:
         p_dict[proj['id']] = [proj['name'], proj['description']]
@@ -366,7 +395,7 @@ def process_inst(ev, di, df, time_array, a, p_dict, projects_in, state):
     :param projects_in: list of projects to process
     :param state: one of the two values - `init` accounting (default), `upd` update
     """
-    instances = get_list_db(di, "nova", state)
+    instances = get_list_db(di, "nova", "instances", state)
     print(80*"=")
     print("Instances selected from DB n = ", len(instances))
     for inst in instances:
@@ -380,7 +409,6 @@ def process_inst(ev, di, df, time_array, a, p_dict, projects_in, state):
         idx_start, idx_end = get_indexes(ev, crt, dlt, di, df, time_array, state)
         a[pname]['vcpus'][idx_start:idx_end] = a[pname]['vcpus'][idx_start:idx_end] + inst['vcpus']
         a[pname]['mem_mb'][idx_start:idx_end] = a[pname]['mem_mb'][idx_start:idx_end] + inst['memory_mb']
-        a[pname]['disk_gb'][idx_start:idx_end] = a[pname]['disk_gb'][idx_start:idx_end] + inst['root_gb']
         a[pname]['ninstances'][idx_start:idx_end] = a[pname]['ninstances'][idx_start:idx_end] + 1
         net_info = json.loads(inst['network_info'])
         if net_info:
@@ -403,17 +431,58 @@ def process_vol(ev, di, df, time_array, a, p_dict, projects_in, state):
     :param projects_in: list of projects to process
     :param state: one of the two values - `init` accounting (default), `upd` update
     """
-    volumes = get_list_db(di, "cinder", state)
-    print(80*"=")
-    print("Volumes selected from DB n = ", len(volumes))
-    for vol in volumes:
-        proj_id = vol['project_id']
-        if proj_id not in p_dict:
-            continue
+    storages = ["volumes", "snapshots"]
+    for stor in storages:
+        volumes = get_list_db(di, "cinder", stor, state)
+        print(80*"=")
+        print(stor, "selected from DB n = ", len(volumes))
+        for vol in volumes:
+            proj_id = vol['project_id']
+            if proj_id not in p_dict:
+                continue
+            crt = vol["created_at"]
+            dlt = vol["deleted_at"]
+            pname = prep_metrics(time_array, p_dict, proj_id, projects_in, a)
+            idx_start, idx_end = get_indexes(ev, crt, dlt, di, df, time_array, state)
+            a[pname]['volume_gb'][idx_start:idx_end] = a[pname]['volume_gb'][idx_start:idx_end] + vol['size']
+            a[pname]['nvolumes'][idx_start:idx_end] = a[pname]['nvolumes'][idx_start:idx_end] + 1
 
-        crt = vol["created_at"]
-        dlt = vol["deleted_at"]
-        pname = prep_metrics(time_array, p_dict, proj_id, projects_in, a)
-        idx_start, idx_end = get_indexes(ev, crt, dlt, di, df, time_array, state)
-        a[pname]['volume_gb'][idx_start:idx_end] = a[pname]['volume_gb'][idx_start:idx_end] + vol['size']
-        a[pname]['nvolumes'][idx_start:idx_end] = a[pname]['nvolumes'][idx_start:idx_end] + 1
+
+def process_quotas(proj_dict):
+    """Process quotas per project, returns a list of all quotas
+    from get_projects.
+    METRIC[i]   <-> quota_name[i]
+    vcpus       <-> cores
+    mem_mb      <-> ram
+    volume_gb   <-> gigabytes
+    ninstances  <-> instances
+    nvolumes    <-> volumes + snapshots
+    npublic_ips <-> floatingip
+    :param proj_dict: dict with all projects from 
+    """
+    dbs = ["nova_api", "cinder", "neutron"]
+    all_quotas = list()
+    for db in dbs:
+        quotas = get_quotas(db)
+        for quota in quotas:
+            if quota['project_id'] in proj_dict.keys():
+                proj_name = proj_dict[quota['project_id']][0]
+                quota['grp_name'] = proj_name
+                if quota['quota_name'] == "cores":
+                    quota['quota_name'] = "q_vcpus"
+                if quota['quota_name'] == "ram":
+                    quota['quota_name'] = "q_mem_mb"
+                if quota['quota_name'] == "gigabytes":
+                    quota['quota_name'] = "q_volume_gb"
+                if quota['quota_name'] == "instances":
+                    quota['quota_name'] = "q_ninstances"
+                if quota['quota_name'] == "volumes":
+                    quota['quota_name'] = "q_nvolumes"
+                if quota['quota_name'] == "snapshots":
+                    quota['quota_name'] = "q_snapshots"
+                if quota['quota_name'] == "floatingip":
+                    quota['quota_name'] = "q_npublic_ips"
+
+                all_quotas.append(quota)
+
+    return all_quotas
