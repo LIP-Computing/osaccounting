@@ -1,7 +1,15 @@
 # Accounting for Openstack
 
 Accounting for Openstack, uses hdf5 to store time series of number of VCPUs, amount of memmory,
-amount of local disk, number and amount of cinder volumes
+amount of local disk, number and size of cinder volumes, per Openstack project.
+
+The script `get_acc.py`, queries the Openstack databases: `keystone`, `nova` and `cinder`, to get
+the projects and respective metrics and writes them into hdf5 files in the form of a time series.
+
+The script `send_elasticsearch.py`, reads the metrics from the produced hdf5 files and send them
+into Elasticsearch database, and `send_influx.py` sends them to Influxdb.
+
+Several additional scripts will be explained below.
 
 ## Configuration
 
@@ -11,8 +19,6 @@ The scripts rely on environment variables:
 * MYSQL_USER - database user to get the records from the cinder DB
 * MYSQL_PASS - database password for the cinder DB
 * MYSQL_HOST - database host
-* CARBON_SERVER - graphite/carbon server
-* CARBON_PORT - graphite/carbon
 
 ## Usage
 

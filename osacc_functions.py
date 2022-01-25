@@ -43,13 +43,6 @@ def get_conf():
     dt_ini = datetime.datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
     ev['secepoc_ini'] = to_secepoc(dt_ini)
 
-    # graphite section options are Optional
-    if parser.has_option('graphite', 'CARBON_SERVER'):
-        ev['carbon_server'] = parser.get('graphite', 'CARBON_SERVER')
-        ev['carbon_port'] = parser.getint('graphite', 'CARBON_PORT')
-        ev['graph_ns'] = parser.get('graphite', 'GRAPH_NS')
-        ev['send_inter'] = parser.getint('graphite', 'SEND_INTER')
-
     # elasticsearch section options are Optional
     if parser.has_option('elasticsearch', 'ESHOST'):
         ev['eshost'] = parser.get('elasticsearch', 'ESHOST')
