@@ -76,7 +76,7 @@ if __name__ == '__main__':
     hdrvol = hdrvol + '| - | - | - | - | - |\n'
     users_str = 'project,name,email\n'
     for project in data:
-        md = md + '## Project: ' + project['project_name'] + '\n\n'
+        md = md + '\n## Project: ' + project['project_name'] + '\n\n'
         md = md + hdrproj
         dtime = datetime.datetime.utcfromtimestamp(project['timestamp'])
         rowproj = '| ' + str(dtime) + ' | ' + project['project_description']
@@ -101,6 +101,8 @@ if __name__ == '__main__':
             if isinstance(server['floating_ips'], list):
                 if len(server['floating_ips']) == 1:
                     pubip = server['floating_ips'][0]
+                else:
+                    pubip = 'n.a.'
 
             rawvm = '| ' + str(datetime.datetime.utcfromtimestamp(server['created_at'])) + ' | '
             rawvm = rawvm + server['hostname'] + ' | ' + serdesc + ' | '
@@ -117,17 +119,15 @@ if __name__ == '__main__':
 
         md = md + '\n'
 
-    header = ('## Howto create this markdown'
-              ''
-              '* `openstack user list --long -c Name -c Description -c Email -c Enabled -f csv --project <PROJECT_NAME>`'
-              '* Update file in gitlab repo: <https://git01.a.incd.pt/lip-computing/openstack-deploy/-/blob/master/playbooks-prod/files/users-stratus-disabled.csv>'
-              '* scp this file to stratus-001: `scp users-stratus-disabled.csv root@stratus-001.ncg.ingrid.pt:/etc/`'
-              '* Execute the script in stratus-001 `/usr/local/bin/osinfo.sh >> /var/log/osinfo/osinfo.log 2>&1`'
-              '* scp the file to your desktop: `scp root@stratus-001.ncg.ingrid.pt:/var/log/osinfo/data.json ~/`'
-              '* clone the git repo: `git clone git@github.com:LIP-Computing/osaccounting.git`'
-              '* `cd osaccounting`'
-              '* Execute the script to produce this md: `python osinfo2md.py ~/data.json`'
-              '\n\nupdate md')
+    header = ('## Howto create this markdown\n\n'
+              '* `openstack user list --long -c Name -c Description -c Email -c Enabled -f csv --project <PROJECT_NAME>`\n'
+              '* Update file in gitlab repo: <https://git01.a.incd.pt/lip-computing/openstack-deploy/-/blob/master/playbooks-prod/files/users-stratus-disabled.csv>\n'
+              '* scp this file to stratus-001: `scp users-stratus-disabled.csv root@stratus-001.ncg.ingrid.pt:/etc/`\n'
+              '* Execute the script in stratus-001 `/usr/local/bin/osinfo.sh >> /var/log/osinfo/osinfo.log 2>&1`\n'
+              '* scp the file to your desktop: `scp root@stratus-001.ncg.ingrid.pt:/var/log/osinfo/data.json ~/`\n'
+              '* clone the git repo: `git clone git@github.com:LIP-Computing/osaccounting.git`\n'
+              '* `cd osaccounting`\n'
+              '* Execute the script to produce this md: `python osinfo2md.py ~/data.json`\n\n')
     md = header + md
     with open('osinfo.md', 'w') as fd:
         fd.write(md)
