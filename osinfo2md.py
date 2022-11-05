@@ -66,13 +66,13 @@ if __name__ == '__main__':
         data = json.load(outjson)
 
     md = ''
-    hdrproj = '| **Date** | **Project description** | **Project ID** |\n'
+    hdrproj = '\n| **Date** | **Project description** | **Project ID** |\n'
     hdrproj = hdrproj + '| - | - | - |\n'
-    hdruser = '| **Created** | **email** | **Name** |\n'
+    hdruser = '\n\n### Users\n| **Created** | **email** | **Name** |\n'
     hdruser = hdruser + '| - | - | - |\n'
-    hdrserver = '| **Created** | **Hostname** | **Description** | **Fixed IP** | **Public IP** |\n'
+    hdrserver = '\n\n### VMs\n| **Created** | **Hostname** | **Description** | **Fixed IP** | **Public IP** |\n'
     hdrserver = hdrserver + '| - | - | - | - | - |\n'
-    hdrvol = '| **Created** | **Size (GB)** | **Type** | **Status** | **Cinder ID** |\n'
+    hdrvol = '\n\n### Volumes\n| **Created** | **Size (GB)** | **Type** | **Status** | **Cinder ID** |\n'
     hdrvol = hdrvol + '| - | - | - | - | - |\n'
     users_str = 'project,name,email\n'
     for project in data:
@@ -119,6 +119,7 @@ if __name__ == '__main__':
 
     header = ('## Howto create this markdown'
               ''
+              '* `openstack user list --long -c Name -c Description -c Email -c Enabled -f csv --project <PROJECT_NAME>`'
               '* Update file in gitlab repo: <https://git01.a.incd.pt/lip-computing/openstack-deploy/-/blob/master/playbooks-prod/files/users-stratus-disabled.csv>'
               '* scp this file to stratus-001: `scp users-stratus-disabled.csv root@stratus-001.ncg.ingrid.pt:/etc/`'
               '* Execute the script in stratus-001 `/usr/local/bin/osinfo.sh >> /var/log/osinfo/osinfo.log 2>&1`'
@@ -126,7 +127,7 @@ if __name__ == '__main__':
               '* clone the git repo: `git clone git@github.com:LIP-Computing/osaccounting.git`'
               '* `cd osaccounting`'
               '* Execute the script to produce this md: `python osinfo2md.py ~/data.json`'
-              '')
+              '\n\nupdate md')
     md = header + md
     with open('osinfo.md', 'w') as fd:
         fd.write(md)
