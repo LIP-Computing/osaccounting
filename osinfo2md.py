@@ -117,6 +117,17 @@ if __name__ == '__main__':
 
         md = md + '\n'
 
+    header = ('## Howto create this markdown'
+              ''
+              '* Update file in gitlab repo: <https://git01.a.incd.pt/lip-computing/openstack-deploy/-/blob/master/playbooks-prod/files/users-stratus-disabled.csv>'
+              '* scp this file to stratus-001: `scp users-stratus-disabled.csv root@stratus-001.ncg.ingrid.pt:/etc/`'
+              '* Execute the script in stratus-001 `/usr/local/bin/osinfo.sh >> /var/log/osinfo/osinfo.log 2>&1`'
+              '* scp the file to your desktop: `scp root@stratus-001.ncg.ingrid.pt:/var/log/osinfo/data.json ~/`'
+              '* clone the git repo: `git clone git@github.com:LIP-Computing/osaccounting.git`'
+              '* `cd osaccounting`'
+              '* Execute the script to produce this md: `python osinfo2md.py ~/data.json`'
+              '')
+    md = header + md
     with open('osinfo.md', 'w') as fd:
         fd.write(md)
 
