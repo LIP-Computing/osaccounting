@@ -21,9 +21,10 @@ osinfo_json =
         "project_id": "string",
         "project_name": "string",
         "project_description": "string",
-        "nvcpus",
-        "ram_gb",
-        "npub_ips",
+        "tot_nvcpus": "int",
+        "tot_ram_gb": "int",
+        "tot_npub_ips": "int",
+        "tot_stor": "int (GB)",
         "users": [
             {
                 "id": "string",
@@ -44,6 +45,9 @@ osinfo_json =
                 "host": "string",
                 "fixed_ips": [],
                 "floating_ips": []
+                "nvcpus",
+                "ram_gb",
+                "npub_ips"
             },
         ],
         "storage": [
@@ -74,9 +78,10 @@ def create_proj():
         "project_id": None,
         "project_name": None,
         "project_description": None,
-        "nvcpus": None,
-        "ram_gb": None,
-        "npub_ips": None,
+        "tot_nvcpus": None,
+        "tot_ram_gb": None,
+        "tot_npub_ips": None,
+        "tot_stor": None,
         "users": list(),
         "servers": list(),
         "storage": list()
@@ -102,6 +107,8 @@ def create_server():
             "created_at": None,
             "key_name": None,
             "host": None,
+            "nvcpus": None,
+            "ram_gb": None,
             "fixed_ips": list(),
             "floating_ips": list()
         }
@@ -127,12 +134,9 @@ def get_servers(proj_id):
     vm_list = list()
     t_inst_info = ["uuid", "hostname", "created_at", "description", "key_name", "host",
                    "memory_mb", "vcpus"]
-    tstr_inst_info = "uuid,hostname,created_at,display_description,key_name,host"
+    tstr_inst_info = "uuid,hostname,created_at,display_description,key_name,host,memory_mb,vcpus"
     query = "SELECT %s FROM instances WHERE (vm_state=\'active\' AND project_id=\'%s\')" % (tstr_inst_info, proj_id)
     inst_info = get_table_rows('nova', query, t_inst_info)
-    nvcpus = 0
-    ram_gb = 0
-    npub_ips = 0
     for inst in inst_info:
         server_info = create_server()
         sel_col = ["network_info"]
@@ -145,8 +149,8 @@ def get_servers(proj_id):
         server_info['key_name'] = inst['key_name']
         server_info['host'] = inst['host']
         server_info['description'] = inst['description']
-        nvcpus = nvcpus + inst['vcpus']
-        ram_gb = ram_gb + inst['memory_mb']
+        server_info['nvcpus'] = int(inst['vcpus'])
+        server_info['ram_gb'] =  int(inst['memory_mb'])
         if net_info:
             for n in range(len(net_info[0]['network']['subnets'])):
                 server_info['fixed_ips'] = list()
@@ -156,13 +160,9 @@ def get_servers(proj_id):
                     server_info['fixed_ips'].append(net_info[0]['network']['subnets'][n]['ips'][k]['address'])
                     if nip:
                         server_info['floating_ips'].append(net_info[0]['network']['subnets'][n]['ips'][k]['floating_ips'][0]['address'])
-                        npub_ips = npub_ips + 1
 
-            vm_list.append(server_info)
+        vm_list.append(server_info)
 
-    server_info['nvcpus'] = nvcpus
-    server_info['ram_gb'] = ram_gb
-    server_info['npub_ips'] = npub_ips
     return vm_list
 
 def get_storage(proj_id):
@@ -182,7 +182,7 @@ def get_storage(proj_id):
         info['id'] = vol['id']
         info['name'] = vol['name']
         info['description'] = vol['description']
-        info['size'] = vol['size']
+        info['size'] = int(vol['size'])
         info['created_at'] = to_secepoc(vol['created_at'])
         info['status'] = vol['status']
         vol_list.append(info)
@@ -200,6 +200,7 @@ def get_storage(proj_id):
         info['description'] = vol['description']
         info['created_at'] = to_secepoc(vol['created_at'])
         info['status'] = vol['status']
+        info['size'] = 0
         vol_list.append(info)
 
     return vol_list
@@ -266,13 +267,29 @@ if __name__ == '__main__':
         proj_info["project_id"] = proj
         proj_info["project_name"] = proj_dict[proj][0]         # idx 0 - name
         proj_info["project_description"] = proj_dict[proj][1]  # idx 1 - description
-
+        tot_vcpus = 0
+        tot_ram = 0
+        tot_ips = 0
+        tot_stor = 0
         server_list = get_servers(proj_info["project_id"])
         proj_info["servers"] = server_list
         vol_list = get_storage(proj_info["project_id"])
         proj_info["storage"] = vol_list
         user_list = get_users(proj_info["project_id"], proj_info["project_name"])
         proj_info["users"] = user_list
+
+        for server in server_list:
+            tot_vcpus = tot_vcpus + server['nvcpus']
+            tot_ram = tot_ram + server['ram_gb']
+            tot_ips = tot_ips + len(server['floating_ips'])
+
+        for vol in vol_list:
+            tot_stor = tot_stor + vol['size']
+
+        proj_info["tot_nvcpus"] = tot_vcpus
+        proj_info["tot_ram_gb"] = tot_ram
+        proj_info["tot_npub_ips"] = tot_ips
+        proj_info["tot_stor"] = tot_stor
         os_info_list.append(proj_info)
 
     json_file = sys.argv[1]
