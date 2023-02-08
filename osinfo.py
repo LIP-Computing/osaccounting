@@ -145,6 +145,8 @@ def get_servers(proj_id):
         server_info['key_name'] = inst['key_name']
         server_info['host'] = inst['host']
         server_info['description'] = inst['description']
+        nvcpus = nvcpus + inst['vcpus']
+        ram_gb = ram_gb + inst['memory_mb']
         if net_info:
             for n in range(len(net_info[0]['network']['subnets'])):
                 server_info['fixed_ips'] = list()
@@ -154,9 +156,13 @@ def get_servers(proj_id):
                     server_info['fixed_ips'].append(net_info[0]['network']['subnets'][n]['ips'][k]['address'])
                     if nip:
                         server_info['floating_ips'].append(net_info[0]['network']['subnets'][n]['ips'][k]['floating_ips'][0]['address'])
+                        npub_ips = npub_ips + 1
 
             vm_list.append(server_info)
 
+    server_info['nvcpus'] = nvcpus
+    server_info['ram_gb'] = ram_gb
+    server_info['npub_ips'] = npub_ips
     return vm_list
 
 def get_storage(proj_id):
