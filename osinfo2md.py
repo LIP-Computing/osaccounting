@@ -15,6 +15,10 @@ osinfo_json =
         "project_id": "string",
         "project_name": "string",
         "project_description": "string",
+        "tot_nvcpus": "int",
+        "tot_ram_gb": "int",
+        "tot_npub_ips": "int",
+        "tot_stor": "int (GB)",
         "users": [
             {
                 "id": "string",
@@ -32,8 +36,12 @@ osinfo_json =
                 "description": "string",
                 "created_at": "timestamp",
                 "key_name": "string",
+                "host": "string",
                 "fixed_ips": [],
                 "floating_ips": []
+                "nvcpus",
+                "ram_gb",
+                "npub_ips"
             },
         ],
         "storage": [
@@ -68,19 +76,30 @@ if __name__ == '__main__':
     md = ''
     hdrproj = '\n| **Date** | **Project description** | **Project ID** |\n'
     hdrproj = hdrproj + '| - | - | - |\n'
+
     hdruser = '\n\n### Users\n| **Created** | **email** | **Name** |\n'
     hdruser = hdruser + '| - | - | - |\n'
-    hdrserver = '\n\n### VMs\n| **Created** | **Hostname** | **Description** | **Fixed IP** | **Public IP** |\n'
-    hdrserver = hdrserver + '| - | - | - | - | - |\n'
+
+    hdrres = '\n\n### Resources\n| **Total VCPUs** | **Total RAM (GB)** | **Total Public IPs** | **Total Storage (GB)**|\n'
+    hdrres = hdrres + '| - | - | - | - |\n'
+
+    hdrserver = '\n\n### VMs\n| **Created** | **Hostname** | **Description** | **VCPUs** | **RAM (GB)** | **Fixed IP** | **Public IP** |\n'
+    hdrserver = hdrserver + '| - | - | - | - | - | - | - |\n'
+
     hdrvol = '\n\n### Volumes\n| **Created** | **Size (GB)** | **Type** | **Status** | **Cinder ID** |\n'
     hdrvol = hdrvol + '| - | - | - | - | - |\n'
+
     users_str = 'project,name,email\n'
+    resource_str = 'project,vcpus,stor,memory,ips\n'
+
     for project in data:
         md = md + '\n## Project: ' + project['project_name'] + '\n\n'
         md = md + hdrproj
+
         dtime = datetime.datetime.utcfromtimestamp(project['timestamp'])
         rowproj = '| ' + str(dtime) + ' | ' + project['project_description']
         rowproj = rowproj + ' | ' + project['project_id'] + ' |\n\n'
+
         md = md + rowproj
         md = md + hdruser
         for user in project['users']:
@@ -90,6 +109,11 @@ if __name__ == '__main__':
             rowuser = rowuser + user['description'] + ' |\n'
             md = md + rowuser
             users_str = users_str + project['project_name'] + ',' + user['description']+ ',' + user['email'] + '\n'
+
+        md = md + hdrres
+        rawres = '| ' + str(project['tot_nvcpus']) + ' | ' + str(project['tot_ram_gb']) + ' | '
+        rawres = rawres + str(project['tot_npub_ips']) + ' | ' + str(project['tot_stor']) + ' |\n'
+        md = md + rawres
 
         md = md + '\n'
         md = md + hdrserver
@@ -106,6 +130,7 @@ if __name__ == '__main__':
 
             rawvm = '| ' + str(datetime.datetime.utcfromtimestamp(server['created_at'])) + ' | '
             rawvm = rawvm + server['hostname'] + ' | ' + serdesc + ' | '
+            rawvm = rawvm + str(server['nvcpus']) + ' | ' + str(server['ram_gb']) + ' | '
             rawvm = rawvm + server['fixed_ips'][0] + ' | ' + pubip + ' |\n'
             md = md + rawvm
 
@@ -118,6 +143,8 @@ if __name__ == '__main__':
             md = md + rawvol
 
         md = md + '\n'
+        resource_str = resource_str + project['project_name'] + ',' + str(project['tot_nvcpus']) + ',' + str(project['tot_stor']) + ','
+        resource_str = resource_str + str(project['tot_ram_gb']) + ',' + str(project['tot_npub_ips']) + '\n'
 
     header = ('## Howto create this markdown\n\n'
               '* `openstack user list --long -c Name -c Description -c Email -c Enabled -f csv --project <PROJECT_NAME>`\n'
@@ -134,5 +161,8 @@ if __name__ == '__main__':
 
     with open('usersall.csv', 'w') as fd:
         fd.write(users_str)
+
+    with open('resourcesall.csv', 'w') as fd:
+        fd.write(resource_str)
 
     sys.exit(0)
