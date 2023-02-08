@@ -21,6 +21,9 @@ osinfo_json =
         "project_id": "string",
         "project_name": "string",
         "project_description": "string",
+        "nvcpus",
+        "ram_gb",
+        "npub_ips",
         "users": [
             {
                 "id": "string",
@@ -71,6 +74,9 @@ def create_proj():
         "project_id": None,
         "project_name": None,
         "project_description": None,
+        "nvcpus": None,
+        "ram_gb": None,
+        "npub_ips": None,
         "users": list(),
         "servers": list(),
         "storage": list()
@@ -119,10 +125,14 @@ def get_servers(proj_id):
     """
     # envirn = get_conf()
     vm_list = list()
-    t_inst_info = ["uuid", "hostname", "created_at", "description", "key_name", "host"]
+    t_inst_info = ["uuid", "hostname", "created_at", "description", "key_name", "host",
+                   "memory_mb", "vcpus"]
     tstr_inst_info = "uuid,hostname,created_at,display_description,key_name,host"
     query = "SELECT %s FROM instances WHERE (vm_state=\'active\' AND project_id=\'%s\')" % (tstr_inst_info, proj_id)
     inst_info = get_table_rows('nova', query, t_inst_info)
+    nvcpus = 0
+    ram_gb = 0
+    npub_ips = 0
     for inst in inst_info:
         server_info = create_server()
         sel_col = ["network_info"]
