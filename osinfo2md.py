@@ -108,7 +108,7 @@ if __name__ == '__main__':
             rowuser = '| ' + str(user['created']) + ' | ' + user['email'] + ' | '
             rowuser = rowuser + user['description'] + ' |\n'
             md = md + rowuser
-            users_str = users_str + project['project_name'] + ',' + user['description']+ ',' + user['email'] + '\n'
+            users_str = users_str + project['project_name'] + ',' + user['description'] + ',' + user['email'] + '\n'
 
         md = md + hdrres
         rawres = '| ' + str(project['tot_nvcpus']) + ' | ' + str(project['tot_ram_gb']) + ' | '
@@ -127,6 +127,9 @@ if __name__ == '__main__':
                     pubip = server['floating_ips'][0]
                 else:
                     pubip = 'n.a.'
+
+            if len(server['fixed_ips']) == 0:
+                continue
 
             rawvm = '| ' + str(datetime.datetime.utcfromtimestamp(server['created_at'])) + ' | '
             rawvm = rawvm + server['hostname'] + ' | ' + serdesc + ' | '
