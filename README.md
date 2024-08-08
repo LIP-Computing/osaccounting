@@ -4,7 +4,7 @@ Accounting for Openstack, uses hdf5 to store time series of number of VCPUs, amo
 amount of local disk, number and size of cinder volumes, per Openstack project.
 
 * `get_acc.py` - This script queries the Openstack databases: `keystone`, `nova` and `cinder`,
-  to get the projects and respective metrics and writes them into hdf5 files in the form of a time 
+  to get the projects and respective metrics and writes them into hdf5 files in the form of a time
   series.
 * `send_elasticsearch.py` - This script reads the metrics from the produced hdf5 files and send them
   into Elasticsearch database

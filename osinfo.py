@@ -65,6 +65,7 @@ osinfo_json =
 ]
 """
 import sys
+import os.path
 import json
 import csv
 import pprint
@@ -211,24 +212,25 @@ def get_users(proj_id, proj_name):
     """
     user_list = list()
 
-    # Users not created in keystone
+    # Users not created in keystone - This will be deprecated in the future
     ev = get_conf()
     ufiledir = ev['ufile_dir']
     fileuser = ufiledir + "/" + "users-stratus-disabled.csv"
-    with open(fileuser) as csv_file:
-        csv_reader = csv.DictReader(csv_file, delimiter=',')
-        line_count = 0
-        for row in csv_reader:
-            info = create_user()
-            if line_count == 0:
-                line_count += 1
-            if row["Project"] == proj_name:
-                info["username"] = row["Name"]
-                info["email"] = row["Email"]
-                info["description"] = row["Description"]
-                info["created"] = False
-                line_count += 1
-                user_list.append(info)
+    if os.path.isfile(fileuser):
+        with open(fileuser) as csv_file:
+            csv_reader = csv.DictReader(csv_file, delimiter=',')
+            line_count = 0
+            for row in csv_reader:
+                info = create_user()
+                if line_count == 0:
+                    line_count += 1
+                if row["Project"] == proj_name:
+                    info["username"] = row["Name"]
+                    info["email"] = row["Email"]
+                    info["description"] = row["Description"]
+                    info["created"] = False
+                    line_count += 1
+                    user_list.append(info)
 
     # Users created in keystone
     t_info = ["id", "extra", "created_at"]
