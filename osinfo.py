@@ -236,15 +236,15 @@ def get_users(proj_id, proj_name):
                     user_list.append(info)
 
     # Users created in keystone
-    assign_info = ['actor_id']
-    assign_str = 'actor_id'
+    assign_info = ["actor_id", "target_id", "role_id"]
+    assign_str = "actor_id,target_id,role_id"
     query = "SELECT %s FROM assignment WHERE target_id=\'%s\'" % (assign_str, proj_id)
     user_ids = oaf.get_table_rows('keystone', query, assign_info)
 
     for user_id in user_ids:
         t_info = ["id", "extra", "created_at"]
         tstr_info = "id,extra,created_at"
-        query = "SELECT %s FROM user WHERE id=\'%s\'" % (tstr_info, user_id)
+        query = "SELECT %s FROM user WHERE id=\'%s\'" % (tstr_info, user_id['actor_id'])
         user_info = oaf.get_table_rows('keystone', query, t_info)
         for user in user_info:
             info = create_user()
@@ -266,6 +266,7 @@ def get_users(proj_id, proj_name):
     # t_info = ["id", "extra", "created_at"]
     # tstr_info = "id,extra,created_at"
     # query = "SELECT %s FROM user WHERE default_project_id=\'%s\'" % (tstr_info, proj_id)
+    # print(query)
     # user_info = oaf.get_table_rows('keystone', query, t_info)
     # for user in user_info:
     #     info = create_user()
