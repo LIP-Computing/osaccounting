@@ -68,13 +68,11 @@ import sys
 import os.path
 import json
 import csv
-import pprint
-import datetime
-from osacc_functions import *
+import osacc_functions as oaf
 
 
 def create_proj():
-    proj_info = {
+    prj_info = {
         "timestamp": None,
         "project_id": None,
         "project_name": None,
@@ -83,11 +81,12 @@ def create_proj():
         "tot_ram_gb": None,
         "tot_npub_ips": None,
         "tot_stor": None,
-        "users": list(),
-        "servers": list(),
-        "storage": list()
+        "users": [],
+        "servers": [],
+        "storage": []
         }
-    return proj_info
+    return prj_info
+
 
 def create_user():
     user_info = {
@@ -100,6 +99,7 @@ def create_user():
         }
     return user_info
 
+
 def create_server():
     server_info = {
             "uuid": None,
@@ -110,10 +110,11 @@ def create_server():
             "host": None,
             "nvcpus": None,
             "ram_gb": None,
-            "fixed_ips": list(),
-            "floating_ips": list()
+            "fixed_ips": [],
+            "floating_ips": []
         }
     return server_info
+
 
 def create_storage():
     storage_info = {
@@ -127,26 +128,26 @@ def create_storage():
         }
     return storage_info
 
+
 def get_servers(proj_id):
     """ Get list with information of all server for a given proj_id
     :return list with VMs information
     """
-    # envirn = get_conf()
-    vm_list = list()
+    vm_list = []
     t_inst_info = ["uuid", "hostname", "created_at", "description", "key_name", "host",
                    "memory_mb", "vcpus"]
     tstr_inst_info = "uuid,hostname,created_at,display_description,key_name,host,memory_mb,vcpus"
     query = "SELECT %s FROM instances WHERE (vm_state=\'active\' AND project_id=\'%s\')" % (tstr_inst_info, proj_id)
-    inst_info = get_table_rows('nova', query, t_inst_info)
+    inst_info = oaf.get_table_rows('nova', query, t_inst_info)
     for inst in inst_info:
         server_info = create_server()
         sel_col = ["network_info"]
         qry_net = 'SELECT %s FROM instance_info_caches WHERE instance_uuid=\"%s\"' % (sel_col[0], inst["uuid"])
-        net_json = get_table_rows('nova', qry_net, sel_col)
+        net_json = oaf.get_table_rows('nova', qry_net, sel_col)
         net_info = json.loads(net_json[0]["network_info"])
         server_info['uuid'] = inst['uuid']
         server_info['hostname'] = inst['hostname']
-        server_info['created_at'] = to_secepoc(inst['created_at'])
+        server_info['created_at'] = oaf.to_secepoc(inst['created_at'])
         server_info['key_name'] = inst['key_name']
         server_info['host'] = inst['host']
         server_info['description'] = inst['description']
@@ -154,8 +155,8 @@ def get_servers(proj_id):
         server_info['ram_gb'] =  int(inst['memory_mb'])
         if net_info:
             for n in range(len(net_info[0]['network']['subnets'])):
-                server_info['fixed_ips'] = list()
-                server_info['floating_ips'] = list()
+                server_info['fixed_ips'] = []
+                server_info['floating_ips'] = []
                 for k in range(len(net_info[0]['network']['subnets'][n]['ips'])):
                     nip = len(net_info[0]['network']['subnets'][n]['ips'][k]['floating_ips'])
                     server_info['fixed_ips'].append(net_info[0]['network']['subnets'][n]['ips'][k]['address'])
@@ -166,17 +167,18 @@ def get_servers(proj_id):
 
     return vm_list
 
+
 def get_storage(proj_id):
     """ Get list with information of all volumes and snapshots for a given proj_id
     :return list with Volume information
     """
-    vol_list = list()
+    vol_list = []
 
     # Volumes
     t_info = ["id", "name", "description", "size", "status", "created_at"]
     tstr_info = "id,display_name,display_description,size,status,created_at"
     query = "SELECT %s FROM volumes WHERE (deleted=\'0\' AND project_id=\'%s\')" % (tstr_info, proj_id)
-    vol_info = get_table_rows('cinder', query, t_info)
+    vol_info = oaf.get_table_rows('cinder', query, t_info)
     for vol in vol_info:
         info = create_storage()
         info['type'] = "volume"
@@ -184,7 +186,7 @@ def get_storage(proj_id):
         info['name'] = vol['name']
         info['description'] = vol['description']
         info['size'] = int(vol['size'])
-        info['created_at'] = to_secepoc(vol['created_at'])
+        info['created_at'] = oaf.to_secepoc(vol['created_at'])
         info['status'] = vol['status']
         vol_list.append(info)
 
@@ -192,28 +194,29 @@ def get_storage(proj_id):
     t_info = ["id", "name", "description", "status", "created_at"]
     tstr_info = "id,display_name,display_description,status,created_at"
     query = "SELECT %s FROM volumes WHERE (deleted=\'0\' AND project_id=\'%s\')" % (tstr_info, proj_id)
-    vol_info = get_table_rows('cinder', query, t_info)
+    vol_info = oaf.get_table_rows('cinder', query, t_info)
     for vol in vol_info:
         info = create_storage()
         info['type'] = "snapshot"
         info['id'] = vol['id']
         info['name'] = vol['name']
         info['description'] = vol['description']
-        info['created_at'] = to_secepoc(vol['created_at'])
+        info['created_at'] = oaf.to_secepoc(vol['created_at'])
         info['status'] = vol['status']
         info['size'] = 0
         vol_list.append(info)
 
     return vol_list
 
+
 def get_users(proj_id, proj_name):
     """ Get list with information of all users for a given proj_id
     :return list with user information
     """
-    user_list = list()
+    user_list = []
 
     # Users not created in keystone - This will be deprecated in the future
-    ev = get_conf()
+    ev = oaf.get_conf()
     ufiledir = ev['ufile_dir']
     fileuser = ufiledir + "/" + "users-stratus-disabled.csv"
     if os.path.isfile(fileuser):
@@ -236,11 +239,11 @@ def get_users(proj_id, proj_name):
     t_info = ["id", "extra", "created_at"]
     tstr_info = "id,extra,created_at"
     query = "SELECT %s FROM user WHERE default_project_id=\'%s\'" % (tstr_info, proj_id)
-    user_info = get_table_rows('keystone', query, t_info)
+    user_info = oaf.get_table_rows('keystone', query, t_info)
     for user in user_info:
         info = create_user()
         info['id'] = user['id']
-        info['created_at'] = to_secepoc(user['created_at'])
+        info['created_at'] = oaf.to_secepoc(user['created_at'])
         info["created"] = True
         user_json = json.loads(user['extra'])
         if 'email' in user_json.keys():
@@ -254,15 +257,16 @@ def get_users(proj_id, proj_name):
 
     return user_list
 
+
 if __name__ == '__main__':
-    os_info_list = list()
-    tstamp = now_acc()
+    os_info_list = []
+    tstamp = oaf.now_acc()
     if len(sys.argv) < 2:
-        print('Error json file not specified: %s <data.json>' %sys.argv[0])
+        print('Error json file not specified: %s <data.json>' % sys.argv[0])
         sys.exit(1)
 
     # proj_dict: project list from keystone database
-    proj_dict = get_projects(tstamp, "init")
+    proj_dict = oaf.get_projects(tstamp, "init")
     for proj in proj_dict:
         proj_info = create_proj()
         proj_info["timestamp"] = tstamp
