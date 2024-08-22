@@ -24,7 +24,6 @@
               }
 """
 import os
-import datetime
 import h5py
 import osacc_functions as oaf
 
@@ -51,8 +50,8 @@ if __name__ == '__main__':
     print("Running update Openstack accounting: ", oaf.to_isodate(df))
     proj_hdf.remove("date")
     time_array_all = oaf.time_series(ev, di, df)
-    projects_in = list()  # fill list of project ID when processing instances or volumes
-    array_metrics = dict()  # array with metrics for each project
+    projects_in = []  # fill list of project ID when processing instances or volumes
+    array_metrics = {}  # array with metrics for each project
     p_dict = oaf.get_projects(di, state)
     oaf.process_inst(ev, di, df, time_array_all, array_metrics, p_dict, projects_in, state)
     oaf.process_vol(ev, di, df, time_array_all, array_metrics, p_dict, projects_in, state)
@@ -67,7 +66,7 @@ if __name__ == '__main__':
         print("Size ts:", len(ts), "di:", di, "df:", df)
         print("idx_start:", idx_start, "idx_end:", idx_end, "idx_start_ds:", idx_start_ds, "idx_end_ds:", idx_end_ds)
         # nvol contains sum of quota of nvolumes and number of snapshots
-        nvols = dict()
+        nvols = {}
         for proj_id in projects_in:
             nvols[proj_id] = 0
             grp_name = p_dict[proj_id][0]

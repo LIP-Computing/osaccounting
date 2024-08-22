@@ -11,14 +11,14 @@
 
 import datetime
 import time
-import tzlocal
 import os
-import h5py
-import numpy
-import mysql.connector
 import configparser
 import json
 import math
+import numpy
+import h5py
+import tzlocal
+import mysql.connector
 
 # List of metrics
 METRICS = ['vcpus', 'mem_mb', 'volume_gb',
@@ -31,7 +31,7 @@ def get_conf():
     """
     parser = configparser.SafeConfigParser(allow_no_value=True)
     parser.read('/etc/osacc.conf')
-    ev = dict()
+    ev = {}
     ev['out_dir'] = parser.get('DEFAULT', 'OUT_DIR')
     ev['month_ini'] = parser.getint('DEFAULT', 'MONTH_INI')
     ev['year_ini'] = parser.getint('DEFAULT', 'YEAR_INI')
@@ -77,6 +77,7 @@ def get_hdf_filename(ev):
     """
     return ev['out_dir'] + os.sep + 'osacc.hdf'
 
+
 def create_hdf(ev, year):
     """Initial creation of hdf5 file containing the time_series dataset
     The file is for 10 years
@@ -97,6 +98,7 @@ def create_hdf(ev, year):
         f.attrs['LastRunUTC'] = str(to_isodate(di))
 
     return file_name
+
 
 def create_proj_datasets(ev, year, proj_id, p_dict):
     """Initial creation of metrics hdf5 dataset containing 1 group per project and datasets
@@ -304,7 +306,7 @@ def get_table_rows(database, query, table_coll):
     rows_list = []
     s = len(table_coll)
     for r in rows:
-        rd = dict()
+        rd = {}
         for i in range(s):
             rd[table_coll[i]] = r[i]
         rows_list.append(rd)
@@ -322,7 +324,7 @@ def get_projects(di, state):
     :return: dictionary with keystone projects
     """
     projects = get_list_db(di, "keystone", "project", state)
-    p_dict = dict()
+    p_dict = {}
     for proj in projects:
         p_dict[proj['id']] = [proj['name'], proj['description']]
 
@@ -341,7 +343,7 @@ def prep_metrics(time_array, p_dict, proj_id, projects_in, a):
     pname = p_dict[proj_id][0]
     if proj_id not in projects_in:
         projects_in.append(proj_id)
-        a[pname] = dict()
+        a[pname] = {}
         for m in METRICS:
             a[pname][m] = numpy.zeros([time_array.size, ], dtype=int)
     return pname
@@ -454,7 +456,7 @@ def process_quotas(proj_dict):
     :param proj_dict: dict with all projects from 
     """
     dbs = ["nova_api", "cinder", "neutron"]
-    all_quotas = list()
+    all_quotas = []
     for db in dbs:
         quotas = get_quotas(db)
         for quota in quotas:
