@@ -236,24 +236,53 @@ def get_users(proj_id, proj_name):
                     user_list.append(info)
 
     # Users created in keystone
-    t_info = ["id", "extra", "created_at"]
-    tstr_info = "id,extra,created_at"
-    query = "SELECT %s FROM user WHERE default_project_id=\'%s\'" % (tstr_info, proj_id)
-    user_info = oaf.get_table_rows('keystone', query, t_info)
-    for user in user_info:
-        info = create_user()
-        info['id'] = user['id']
-        info['created_at'] = oaf.to_secepoc(user['created_at'])
-        info["created"] = True
-        user_json = json.loads(user['extra'])
-        if 'email' in user_json.keys():
-            info['username'] = user_json['email']
-            info['email'] = user_json['email']
+    assign_info = ['actor_id']
+    assign_str = 'actor_id'
+    query = "SELECT %s FROM assignment WHERE target_id=\'%s\'" % (assign_str, proj_id)
+    user_ids = oaf.get_table_rows('keystone', query, assign_info)
 
-        if 'description' in user_json.keys():
-            info['description'] = user_json['description']
+    for user_id in user_ids:
+        t_info = ["id", "extra", "created_at"]
+        tstr_info = "id,extra,created_at"
+        query = "SELECT %s FROM user WHERE id=\'%s\'" % (tstr_info, user_id)
+        user_info = oaf.get_table_rows('keystone', query, t_info)
+        for user in user_info:
+            info = create_user()
+            info['id'] = user['id']
+            info['created_at'] = oaf.to_secepoc(user['created_at'])
+            info["created"] = True
+            user_json = json.loads(user['extra'])
+            if 'email' in user_json.keys():
+                info['username'] = user_json['email']
+                info['email'] = user_json['email']
 
-        user_list.append(info)
+            if 'description' in user_json.keys():
+                info['description'] = user_json['description']
+
+            user_list.append(info)
+
+
+
+    # t_info = ["id", "extra", "created_at"]
+    # tstr_info = "id,extra,created_at"
+    # query = "SELECT %s FROM user WHERE default_project_id=\'%s\'" % (tstr_info, proj_id)
+    # user_info = oaf.get_table_rows('keystone', query, t_info)
+    # for user in user_info:
+    #     info = create_user()
+    #     info['id'] = user['id']
+    #     info['created_at'] = oaf.to_secepoc(user['created_at'])
+    #     info["created"] = True
+    #     user_json = json.loads(user['extra'])
+    #     if 'email' in user_json.keys():
+    #         info['username'] = user_json['email']
+    #         info['email'] = user_json['email']
+
+    #     if 'description' in user_json.keys():
+    #         info['description'] = user_json['description']
+
+    #     user_list.append(info)
+
+
 
     return user_list
 
