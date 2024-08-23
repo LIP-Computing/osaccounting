@@ -72,6 +72,7 @@ import osacc_functions as oaf
 
 
 def create_proj():
+    '''Create project dictionary'''
     prj_info = {
         "timestamp": None,
         "project_id": None,
@@ -89,6 +90,7 @@ def create_proj():
 
 
 def create_user():
+    '''Create user dictionary'''
     user_info = {
             "id": None,
             "username": None,
@@ -101,6 +103,7 @@ def create_user():
 
 
 def create_server():
+    '''Create server dictionary'''
     server_info = {
             "uuid": None,
             "hostname": None,
@@ -117,6 +120,7 @@ def create_server():
 
 
 def create_storage():
+    '''Create storage dictionary'''
     storage_info = {
             "type": None,
             "id": None,
@@ -137,12 +141,12 @@ def get_servers(proj_id):
     t_inst_info = ["uuid", "hostname", "created_at", "description", "key_name", "host",
                    "memory_mb", "vcpus"]
     tstr_inst_info = "uuid,hostname,created_at,display_description,key_name,host,memory_mb,vcpus"
-    query = "SELECT %s FROM instances WHERE (vm_state=\'active\' AND project_id=\'%s\')" % (tstr_inst_info, proj_id)
+    query = f'SELECT {tstr_inst_info} FROM instances WHERE (vm_state=\"active\" AND project_id=\"{proj_id}\")'
     inst_info = oaf.get_table_rows('nova', query, t_inst_info)
     for inst in inst_info:
         server_info = create_server()
         sel_col = ["network_info"]
-        qry_net = 'SELECT %s FROM instance_info_caches WHERE instance_uuid=\"%s\"' % (sel_col[0], inst["uuid"])
+        qry_net = f'SELECT {sel_col[0]} FROM instance_info_caches WHERE instance_uuid=\"{inst["uuid"]}\"'
         net_json = oaf.get_table_rows('nova', qry_net, sel_col)
         net_info = json.loads(net_json[0]["network_info"])
         server_info['uuid'] = inst['uuid']
@@ -177,7 +181,7 @@ def get_storage(proj_id):
     # Volumes
     t_info = ["id", "name", "description", "size", "status", "created_at"]
     tstr_info = "id,display_name,display_description,size,status,created_at"
-    query = "SELECT %s FROM volumes WHERE (deleted=\'0\' AND project_id=\'%s\')" % (tstr_info, proj_id)
+    query = f'SELECT {tstr_info} FROM volumes WHERE (deleted=\"0\" AND project_id=\"{proj_id}\")'
     vol_info = oaf.get_table_rows('cinder', query, t_info)
     for vol in vol_info:
         info = create_storage()
@@ -193,7 +197,7 @@ def get_storage(proj_id):
     # Snapshots
     t_info = ["id", "name", "description", "status", "created_at"]
     tstr_info = "id,display_name,display_description,status,created_at"
-    query = "SELECT %s FROM volumes WHERE (deleted=\'0\' AND project_id=\'%s\')" % (tstr_info, proj_id)
+    query = f'SELECT {tstr_info} FROM volumes WHERE (deleted=\"0\" AND project_id=\"{proj_id}\")'
     vol_info = oaf.get_table_rows('cinder', query, t_info)
     for vol in vol_info:
         info = create_storage()
@@ -238,19 +242,19 @@ def get_users(proj_id, proj_name):
     # Users created in keystone
     assign_info = ["actor_id", "target_id", "role_id"]
     assign_str = "actor_id,target_id,role_id"
-    query = "SELECT %s FROM assignment WHERE target_id=\'%s\'" % (assign_str, proj_id)
+    query = f'SELECT {assign_str} FROM assignment WHERE target_id=\"{proj_id}\"'
     user_ids = oaf.get_table_rows('keystone', query, assign_info)
 
     for user_id in user_ids:
         t_info = ["id", "extra", "created_at"]
         tstr_info = "id,extra,created_at"
-        query = "SELECT %s FROM user WHERE id=\'%s\'" % (tstr_info, user_id['actor_id'])
+        query = f'SELECT {tstr_info} FROM user WHERE id=\"{user_id['actor_id']}\"'
         user_info = oaf.get_table_rows('keystone', query, t_info)
         for user in user_info:
             info = create_user()
             info['id'] = user['id']
             info['created_at'] = oaf.to_secepoc(user['created_at'])
-            info["created"] = True
+            info['created'] = True
             user_json = json.loads(user['extra'])
             if 'email' in user_json.keys():
                 info['username'] = user_json['email']
@@ -308,5 +312,4 @@ if __name__ == '__main__':
     with open(json_file, 'w') as outjson:
         json.dump(os_info_list, outjson)
 
-    # pprint.pprint(os_info_list)
     sys.exit(0)

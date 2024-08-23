@@ -70,8 +70,8 @@ import json
 from datetime import datetime, timezone
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print(f'Error json file not specified: {sys.argv[0]} <data.json>')
+    if len(sys.argv) < 3:
+        print(f'Error json file not specified: {sys.argv[0]} <data.json> <output_dir>')
         sys.exit(1)
 
     osdashconf = "/etc/openstack-dashboard/local_settings.py"
@@ -84,6 +84,11 @@ if __name__ == '__main__':
                     break
 
     json_file = sys.argv[1]
+    out_dir = sys.argv[2] + '/'
+    if not os.path.isdir(out_dir):
+        print(f'Error dir {out_dir} not dir or not found')
+        sys.exit(1)
+
     with open(json_file, 'r', encoding='utf-8') as outjson:
         data = json.load(outjson)
 
@@ -161,8 +166,8 @@ if __name__ == '__main__':
 
     header = f'# Projects information for {osinfra}\n\n'
     md = header + md
-    mdfile = 'osinfo-' + osinfra + '.md'
-    rescsv = 'resourcesall-' + osinfra + '.csv'
+    mdfile = out_dir + 'osinfo-' + osinfra + '.md'
+    rescsv = out_dir + 'resourcesall-' + osinfra + '.csv'
     with open(mdfile, 'w', encoding='utf-8') as fd:
         fd.write(md)
 
