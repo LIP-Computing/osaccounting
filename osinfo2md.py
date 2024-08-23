@@ -65,28 +65,26 @@ osinfo_json =
 ]
 """
 import sys
+import os
 import json
-import pprint
-import datetime
-
+from datetime import datetime, timezone
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('Error json file not specified: %s <data.json>' % sys.argv[0])
+        print(f'Error json file not specified: {sys.argv[0]} <data.json>')
         sys.exit(1)
 
     osdashconf = "/etc/openstack-dashboard/local_settings.py"
+    osinfra = ''
     if os.path.isfile(osdashconf):
-        with open(osdashconf, 'r') as fp:
+        with open(osdashconf, 'r', encoding='utf-8') as fp:
             for l_no, line in enumerate(fp):
                 if 'OPENSTACK_HOST' in line:
-                    osinfra = line.split('=')[1]
+                    osinfra = line.split('\"')[1]
                     break
 
-    print(osinfra)
-
     json_file = sys.argv[1]
-    with open(json_file, 'r') as outjson:
+    with open(json_file, 'r', encoding='utf-8') as outjson:
         data = json.load(outjson)
 
     md = ''
@@ -110,7 +108,7 @@ if __name__ == '__main__':
     for project in data:
         md = md + '\n## Project: ' + project['project_name'] + '\n\n'
         md = md + hdrproj
-        dtime = datetime.datetime.utcfromtimestamp(project['timestamp'])
+        dtime = datetime.fromtimestamp(project['timestamp'], tz=timezone.utc)
         rowproj = '| ' + str(dtime) + ' | ' + project['project_description']
         rowproj = rowproj + ' | ' + project['project_id'] + ' |\n\n'
         md = md + rowproj
@@ -143,7 +141,7 @@ if __name__ == '__main__':
             if len(server['fixed_ips']) == 0:
                 continue
 
-            rawvm = '| ' + str(datetime.datetime.utcfromtimestamp(server['created_at'])) + ' | '
+            rawvm = '| ' + str(datetime.fromtimestamp(server['created_at'], tz=timezone.utc)) + ' | '
             rawvm = rawvm + server['hostname'] + ' | ' + serdesc + ' | '
             rawvm = rawvm + str(server['nvcpus']) + ' | ' + str(server['ram_gb']) + ' | '
             rawvm = rawvm + server['fixed_ips'][0] + ' | ' + pubip + ' |\n'
@@ -152,7 +150,7 @@ if __name__ == '__main__':
         md = md + '\n'
         md = md + hdrvol
         for vol in project['storage']:
-            rawvol = '| ' + str(datetime.datetime.utcfromtimestamp(vol['created_at'])) + ' | '
+            rawvol = '| ' + str(datetime.fromtimestamp(vol['created_at'], tz=timezone.utc)) + ' | '
             rawvol = rawvol + str(vol['size']) + ' | ' + vol['type'] + ' | '
             rawvol = rawvol + vol['status'] + ' | ' + vol['id'] + ' |\n'
             md = md + rawvol
@@ -161,12 +159,14 @@ if __name__ == '__main__':
         resource_str = resource_str + project['project_name'] + ',' + str(project['tot_nvcpus']) + ',' + str(project['tot_stor']) + ','
         resource_str = resource_str + str(project['tot_ram_gb']) + ',' + str(project['tot_npub_ips']) + '\n'
 
-    header = '# Projects information for\n\n'
+    header = f'# Projects information for {osinfra}\n\n'
     md = header + md
-    with open('osinfo.md', 'w') as fd:
+    mdfile = 'osinfo-' + osinfra + '.md'
+    rescsv = 'resourcesall-' + osinfra + '.csv'
+    with open(mdfile, 'w', encoding='utf-8') as fd:
         fd.write(md)
 
-    with open('resourcesall.csv', 'w') as fd:
+    with open(rescsv, 'w', encoding='utf-8') as fd:
         fd.write(resource_str)
 
     sys.exit(0)
