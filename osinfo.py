@@ -248,7 +248,8 @@ def get_users(proj_id, proj_name):
     for user_id in user_ids:
         t_info = ["id", "extra", "created_at"]
         tstr_info = "id,extra,created_at"
-        query = f'SELECT {tstr_info} FROM user WHERE id=\"{user_id['actor_id']}\"'
+        usrid = user_id['actor_id']
+        query = f'SELECT {tstr_info} FROM user WHERE id=\"{usrid}\"'
         user_info = oaf.get_table_rows('keystone', query, t_info)
         for user in user_info:
             info = create_user()

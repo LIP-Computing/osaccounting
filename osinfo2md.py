@@ -74,10 +74,17 @@ if __name__ == '__main__':
         print(f'Error json file not specified: {sys.argv[0]} <data.json> <output_dir>')
         sys.exit(1)
 
-    osdashconf = "/etc/openstack-dashboard/local_settings.py"
+    osdashconf = "/etc/openstack-dashboard/local_settings"
     osinfra = ''
     if os.path.isfile(osdashconf):
         with open(osdashconf, 'r', encoding='utf-8') as fp:
+            for l_no, line in enumerate(fp):
+                if 'OPENSTACK_HOST' in line:
+                    osinfra = line.split('\"')[1]
+                    break
+
+    if os.path.isfile(osdashconf + '.py'):
+        with open(osdashconf + '.py', 'r', encoding='utf-8') as fp:
             for l_no, line in enumerate(fp):
                 if 'OPENSTACK_HOST' in line:
                     osinfra = line.split('\"')[1]
