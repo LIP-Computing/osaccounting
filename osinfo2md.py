@@ -116,6 +116,11 @@ if __name__ == '__main__':
     hdrvol = hdrvol + '| - | - | - | - | - |\n'
 
     resource_str = 'project,vcpus,stor,memory,ips\n'
+    res_str = ''
+    tvcpus = 0
+    tram = 0
+    tips = 0
+    tstor = 0
 
     for project in data:
         md = md + '\n## Project: ' + project['project_name'] + '\n\n'
@@ -168,8 +173,12 @@ if __name__ == '__main__':
             md = md + rawvol
 
         md = md + '\n'
-        resource_str = resource_str + project['project_name'] + ',' + str(project['tot_nvcpus']) + ',' + str(project['tot_stor']) + ','
-        resource_str = resource_str + str(project['tot_ram_gb']) + ',' + str(project['tot_npub_ips']) + '\n'
+        res_str += project['project_name'] + ',' + str(project['tot_nvcpus']) + ',' + str(project['tot_stor']) + ','
+        res_str += str(project['tot_ram_gb']) + ',' + str(project['tot_npub_ips']) + '\n'
+        tvcpus += project['tot_nvcpus']
+        tram += project['tot_ram_gb']
+        tips += project['tot_npub_ips']
+        tstor += project['tot_stor']
 
     header = f'# Projects information for {osinfra}\n\n'
     md = header + md
@@ -178,6 +187,8 @@ if __name__ == '__main__':
     with open(mdfile, 'w', encoding='utf-8') as fd:
         fd.write(md)
 
+    resource_str += 'total_used' + ',' + str(tvcpus) + ',' + str(tstor) + ',' + str(tram) + ',' + str(tips) + '\n'
+    resource_str += res_str
     with open(rescsv, 'w', encoding='utf-8') as fd:
         fd.write(resource_str)
 

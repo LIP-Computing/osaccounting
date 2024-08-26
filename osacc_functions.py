@@ -9,7 +9,7 @@
 """Functions and utils for the Openstack accounting
 """
 
-import datetime
+from datetime import datetime, timezone
 import time
 import os
 import configparser
@@ -40,7 +40,7 @@ def get_conf():
     ev['mysql_pass'] = parser.get('mysql', 'MYSQL_PASS')
     ev['mysql_host'] = parser.get('mysql', 'MYSQL_HOST')
     ev['ufile_dir'] = parser.get('osinfo', 'UFILE_DIR')
-    dt_ini = datetime.datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
+    dt_ini = datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
     ev['secepoc_ini'] = to_secepoc(dt_ini)
 
     # elasticsearch section options are Optional
@@ -66,7 +66,7 @@ def get_years(ev):
     :param ev: configuration options
     :return (list) of years
     """
-    tf = datetime.datetime.utcnow()
+    tf = datetime.now(timezone.utc)
     return list(range(ev['year_ini'], tf.year + 1))
 
 
@@ -85,8 +85,8 @@ def create_hdf(ev, year):
     :param year: Year
     :return (string) file_name
     """
-    di = to_secepoc(datetime.datetime(year, 1, 1, 0, 0, 0))
-    df = to_secepoc(datetime.datetime(year+10, 1, 1, 0, 0, 0))
+    di = to_secepoc(datetime(year, 1, 1, 0, 0, 0))
+    df = to_secepoc(datetime(year+10, 1, 1, 0, 0, 0))
     if year == ev['year_ini']:
         di = ev['secepoc_ini']
 
@@ -114,8 +114,8 @@ def create_proj_datasets(ev, year, proj_id, p_dict):
     :param p_dict: projects dictionary from keystone
     :return (string) file_name
     """
-    di = to_secepoc(datetime.datetime(year, 1, 1, 0, 0, 0))
-    df = to_secepoc(datetime.datetime(year+10, 1, 1, 0, 0, 0))
+    di = to_secepoc(datetime(year, 1, 1, 0, 0, 0))
+    df = to_secepoc(datetime(year+10, 1, 1, 0, 0, 0))
     if year == ev['year_ini']:
         di = ev['secepoc_ini']
 
@@ -146,7 +146,7 @@ def to_isodate(date):
     :param date: Date in seconds to epoc format
     :returns (datetime) utc datetime
     """
-    return datetime.datetime.utcfromtimestamp(date)
+    return datetime.fromtimestamp(date, tz=timezone.utc)
 
 
 def time2index(ev, tstamp, time_array):
@@ -168,7 +168,7 @@ def now_acc():
     """
     :return: datetime now in seconds from epoch
     """
-    nacc = datetime.datetime.utcnow()
+    nacc = datetime.now(timezone.utc)
     return to_secepoc(nacc)
 
 
@@ -209,7 +209,7 @@ def get_list_db(ti, database, dbtable, state):
     :return (json dict): List of rows of a table in the database
     """
     local_timezone = tzlocal.get_localzone()
-    dtlocal_i = datetime.datetime.fromtimestamp(ti, local_timezone)
+    dtlocal_i = datetime.fromtimestamp(ti, local_timezone)
 
     # The cnd_state is "All" if in initialization
     # The cnd_state is deleted_at >= date_time_local if in update

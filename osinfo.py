@@ -91,7 +91,7 @@ def create_proj():
 
 def create_user():
     '''Create user dictionary'''
-    user_info = {
+    usr_info = {
             "id": None,
             "username": None,
             "email": None,
@@ -99,12 +99,12 @@ def create_user():
             "created_at": None,
             "created": None
         }
-    return user_info
+    return usr_info
 
 
 def create_server():
     '''Create server dictionary'''
-    server_info = {
+    srv_info = {
             "uuid": None,
             "hostname": None,
             "description": None,
@@ -116,12 +116,12 @@ def create_server():
             "fixed_ips": [],
             "floating_ips": []
         }
-    return server_info
+    return srv_info
 
 
 def create_storage():
     '''Create storage dictionary'''
-    storage_info = {
+    stor_info = {
             "type": None,
             "id": None,
             "name": None,
@@ -130,10 +130,10 @@ def create_storage():
             "status": None,
             "created_at": None,
         }
-    return storage_info
+    return stor_info
 
 
-def get_servers(proj_id):
+def get_servers(prj_id):
     """ Get list with information of all server for a given proj_id
     :return list with VMs information
     """
@@ -141,7 +141,7 @@ def get_servers(proj_id):
     t_inst_info = ["uuid", "hostname", "created_at", "description", "key_name", "host",
                    "memory_mb", "vcpus"]
     tstr_inst_info = "uuid,hostname,created_at,display_description,key_name,host,memory_mb,vcpus"
-    query = f'SELECT {tstr_inst_info} FROM instances WHERE (vm_state=\"active\" AND project_id=\"{proj_id}\")'
+    query = f'SELECT {tstr_inst_info} FROM instances WHERE (vm_state=\"active\" AND project_id=\"{prj_id}\")'
     inst_info = oaf.get_table_rows('nova', query, t_inst_info)
     for inst in inst_info:
         server_info = create_server()
@@ -172,16 +172,16 @@ def get_servers(proj_id):
     return vm_list
 
 
-def get_storage(proj_id):
+def get_storage(prj_id):
     """ Get list with information of all volumes and snapshots for a given proj_id
     :return list with Volume information
     """
-    vol_list = []
+    volume_list = []
 
     # Volumes
     t_info = ["id", "name", "description", "size", "status", "created_at"]
     tstr_info = "id,display_name,display_description,size,status,created_at"
-    query = f'SELECT {tstr_info} FROM volumes WHERE (deleted=\"0\" AND project_id=\"{proj_id}\")'
+    query = f'SELECT {tstr_info} FROM volumes WHERE (deleted=\"0\" AND project_id=\"{prj_id}\")'
     vol_info = oaf.get_table_rows('cinder', query, t_info)
     for vol in vol_info:
         info = create_storage()
@@ -192,12 +192,12 @@ def get_storage(proj_id):
         info['size'] = int(vol['size'])
         info['created_at'] = oaf.to_secepoc(vol['created_at'])
         info['status'] = vol['status']
-        vol_list.append(info)
+        volume_list.append(info)
 
     # Snapshots
     t_info = ["id", "name", "description", "status", "created_at"]
     tstr_info = "id,display_name,display_description,status,created_at"
-    query = f'SELECT {tstr_info} FROM volumes WHERE (deleted=\"0\" AND project_id=\"{proj_id}\")'
+    query = f'SELECT {tstr_info} FROM volumes WHERE (deleted=\"0\" AND project_id=\"{prj_id}\")'
     vol_info = oaf.get_table_rows('cinder', query, t_info)
     for vol in vol_info:
         info = create_storage()
@@ -208,23 +208,23 @@ def get_storage(proj_id):
         info['created_at'] = oaf.to_secepoc(vol['created_at'])
         info['status'] = vol['status']
         info['size'] = 0
-        vol_list.append(info)
+        volume_list.append(info)
 
-    return vol_list
+    return volume_list
 
 
-def get_users(proj_id, proj_name):
+def get_users(prj_id, proj_name):
     """ Get list with information of all users for a given proj_id
     :return list with user information
     """
-    user_list = []
+    usr_list = []
 
     # Users not created in keystone - This will be deprecated in the future
     ev = oaf.get_conf()
     ufiledir = ev['ufile_dir']
     fileuser = ufiledir + "/" + "users-stratus-disabled.csv"
     if os.path.isfile(fileuser):
-        with open(fileuser) as csv_file:
+        with open(fileuser, encoding='utf-8') as csv_file:
             csv_reader = csv.DictReader(csv_file, delimiter=',')
             line_count = 0
             for row in csv_reader:
@@ -237,12 +237,12 @@ def get_users(proj_id, proj_name):
                     info["description"] = row["Description"]
                     info["created"] = False
                     line_count += 1
-                    user_list.append(info)
+                    usr_list.append(info)
 
     # Users created in keystone
     assign_info = ["actor_id", "target_id", "role_id"]
     assign_str = "actor_id,target_id,role_id"
-    query = f'SELECT {assign_str} FROM assignment WHERE target_id=\"{proj_id}\"'
+    query = f'SELECT {assign_str} FROM assignment WHERE target_id=\"{prj_id}\"'
     user_ids = oaf.get_table_rows('keystone', query, assign_info)
 
     for user_id in user_ids:
@@ -264,26 +264,26 @@ def get_users(proj_id, proj_name):
             if 'description' in user_json.keys():
                 info['description'] = user_json['description']
 
-            user_list.append(info)
+            usr_list.append(info)
 
-    return user_list
+    return usr_list
 
 
 if __name__ == '__main__':
     os_info_list = []
     tstamp = oaf.now_acc()
     if len(sys.argv) < 2:
-        print('Error json file not specified: %s <data.json>' % sys.argv[0])
+        print(f'Error json file not specified: {sys.argv[0]} <data.json>')
         sys.exit(1)
 
     # proj_dict: project list from keystone database
     proj_dict = oaf.get_projects(tstamp, "init")
-    for proj in proj_dict:
+    for proj_id, proj_key in proj_dict.items():
         proj_info = create_proj()
         proj_info["timestamp"] = tstamp
-        proj_info["project_id"] = proj
-        proj_info["project_name"] = proj_dict[proj][0]         # idx 0 - name
-        proj_info["project_description"] = proj_dict[proj][1]  # idx 1 - description
+        proj_info["project_id"] = proj_id
+        proj_info["project_name"] = proj_key[0]         # idx 0 - name
+        proj_info["project_description"] = proj_key[1]  # idx 1 - description
         tot_vcpus = 0
         tot_ram = 0
         tot_ips = 0
@@ -310,7 +310,7 @@ if __name__ == '__main__':
         os_info_list.append(proj_info)
 
     json_file = sys.argv[1]
-    with open(json_file, 'w') as outjson:
+    with open(json_file, 'w', encoding='utf-8') as outjson:
         json.dump(os_info_list, outjson)
 
     sys.exit(0)
