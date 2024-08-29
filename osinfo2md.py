@@ -112,8 +112,8 @@ if __name__ == '__main__':
     hdrserver = '\n\n### VMs\n| **Created** | **Hostname** | **Description** | **VCPUs** | **RAM (GB)** | **Fixed IP** | **Public IP** |\n'
     hdrserver = hdrserver + '| - | - | - | - | - | - | - |\n'
 
-    hdrvol = '\n\n### Volumes\n| **Created** | **Size (GB)** | **Type** | **Status** | **Cinder ID** |\n'
-    hdrvol = hdrvol + '| - | - | - | - | - |\n'
+    hdrvol = '\n\n### Volumes\n| **Created** | **Name** | **Size (GB)** | **Type** | **Status** | **Cinder ID** |\n'
+    hdrvol = hdrvol + '| - | - | - | - | - | - |\n'
 
     resource_str = 'project,vcpus,stor,memory,ips\n'
     res_str = ''
@@ -168,7 +168,7 @@ if __name__ == '__main__':
         md = md + hdrvol
         for vol in project['storage']:
             rawvol = '| ' + str(datetime.fromtimestamp(vol['created_at'], tz=timezone.utc)) + ' | '
-            rawvol = rawvol + str(vol['size']) + ' | ' + vol['type'] + ' | '
+            rawvol = rawvol + str(vol['name']) + ' | ' + str(vol['size']) + ' | ' + vol['type'] + ' | '
             rawvol = rawvol + vol['status'] + ' | ' + vol['id'] + ' |\n'
             md = md + rawvol
 
