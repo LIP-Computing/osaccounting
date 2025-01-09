@@ -15,6 +15,7 @@ import h5py
 from influxdb import InfluxDBClient
 import osacc_functions as oaf
 
+
 def get_influxclient(ev):
     """Get InfluxDB Client
     :return: InfluxDB Client
@@ -26,12 +27,12 @@ def get_influxclient(ev):
     dbname = ev['dbname']
     bssl = ev['ssl']
     bverify_ssl = ev['verify_ssl']
-    client = InfluxDBClient(dbhost, dbport, dbuser, dbpass,
-                            ssl=bssl, verify_ssl=bverify_ssl)
+    client = InfluxDBClient(dbhost, dbport, dbuser, dbpass, ssl=bssl, verify_ssl=bverify_ssl)
     check_conn = client.ping()
     client.create_database(dbname)
     client.switch_database(dbname)
     return client
+
 
 def get_last(ev, client, group):
     """Get last metric timestamp from DB
@@ -49,6 +50,7 @@ def get_last(ev, client, group):
         for t in time_stamp:
             a = dateutil.parser.parse(t["time"])
             ti = oaf.to_secepoc(a)
+
     return ti
 
 
@@ -76,7 +78,7 @@ if __name__ == '__main__':
             for i in range(idx_start, idx_end+1):
                 a = (i-idx_start) % batch_size
                 if not a:
-                    data_met = list()
+                    data_met = []
 
                 make_mtr = "cloud_acc,project=" + group + " "
                 for mtr in oaf.METRICS:
@@ -91,6 +93,4 @@ if __name__ == '__main__':
                 data_met.append(infl_proj)
                 b = (i+1-idx_start) % batch_size
                 if not b or (i == idx_end):
-                    client.write_points(data_met, batch_size=batch_size,
-                                        protocol='line')
-
+                    client.write_points(data_met, batch_size=batch_size, protocol='line')

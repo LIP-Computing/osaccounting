@@ -48,15 +48,6 @@ The scripts rely on environment variables:
   * `SSL` - if you use cert to assess the database.
   * `VERIFY_SSL` - if client uses certificate to connect to database.
 
-## Usage
-
-The script setup.sh deploys the scripts in /usr/local/bin and a configuration file to setup the necessary environment
-variables osacc-conf.sh into /etc
-
-```bash
-./setup.sh
-```
-
 ## Current resource usage
 
 The script `res_usage.py` should be in `root@stratus-001.ncg.ingrid.pt:/usr/local/bin/` it has the options set in the
