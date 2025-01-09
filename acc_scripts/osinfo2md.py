@@ -68,28 +68,15 @@ import sys
 import os
 import json
 from datetime import datetime, timezone
+import osacc_functions as oaf
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print(f'Error json file not specified: {sys.argv[0]} <data.json> <output_dir>')
         sys.exit(1)
 
-    osdashconf = "/etc/openstack-dashboard/local_settings"
-    osinfra = ''
-    if os.path.isfile(osdashconf):
-        with open(osdashconf, 'r', encoding='utf-8') as fp:
-            for l_no, line in enumerate(fp):
-                if 'OPENSTACK_HOST' in line:
-                    osinfra = line.split('\"')[1]
-                    break
-
-    if os.path.isfile(osdashconf + '.py'):
-        with open(osdashconf + '.py', 'r', encoding='utf-8') as fp:
-            for l_no, line in enumerate(fp):
-                if 'OPENSTACK_HOST' in line:
-                    osinfra = line.split('\"')[1]
-                    break
-
+    ev = oaf.get_conf()
+    osinfra = ev['openstack_host']
     json_file = sys.argv[1]
     out_dir = sys.argv[2] + '/'
     if not os.path.isdir(out_dir):

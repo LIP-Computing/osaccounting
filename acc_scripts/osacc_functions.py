@@ -33,6 +33,7 @@ def get_conf():
     parser.read('/etc/osacc.conf')
     ev = {}
     ev['out_dir'] = parser.get('DEFAULT', 'OUT_DIR')
+    ev['openstack_host'] = parser.get('DEFAULT', 'OPENSTACK_HOST')
     ev['month_ini'] = parser.getint('DEFAULT', 'MONTH_INI')
     ev['year_ini'] = parser.getint('DEFAULT', 'YEAR_INI')
     ev['delta_time'] = parser.getfloat('DEFAULT', 'DELTA_TIME')
