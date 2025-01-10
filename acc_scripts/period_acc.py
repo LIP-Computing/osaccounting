@@ -9,6 +9,7 @@
 """Monthly resource usage for all projects
 """
 
+import sys
 import datetime
 import h5py
 import osacc_functions as oaf
@@ -16,6 +17,15 @@ from dateutil.relativedelta import *
 
 
 if __name__ == '__main__':
+
+    if len(sys.argv) < 4:
+        print(f'Error, specify all input arguments: {sys.argv[0]} <BASE_NAME> <START_DATE> <END_DATE>')
+        print('    <BASE_NAME>: cloud_monthly|cloud_weekly')
+        print('    <START_DATE>: year-month-day')
+        print('    <END_DATE>: year-month-day')
+        print('    The output files are named: cloud_monthly_stratus.a.incd.pt_2023-03-01_2023-03-31.csv')
+        sys.exit(1)
+
 
     ev = oaf.get_conf()
     filename = oaf.get_hdf_filename(ev)
