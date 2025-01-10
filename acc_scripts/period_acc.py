@@ -18,19 +18,25 @@ from dateutil.relativedelta import *
 
 if __name__ == '__main__':
 
-    if len(sys.argv) < 4:
-        print(f'Error, specify all input arguments: {sys.argv[0]} <BASE_NAME> <START_DATE> <END_DATE>')
-        print('    <BASE_NAME>: cloud_monthly|cloud_weekly')
-        print('    <START_DATE>: year-month-day')
-        print('    <END_DATE>: year-month-day')
+    if len(sys.argv) < 2:
+        print(f'Error, specify period: {sys.argv[0]} <monthly|weekly>')
         print('    The output files are named: cloud_monthly_stratus.a.incd.pt_2023-03-01_2023-03-31.csv')
         sys.exit(1)
 
+    period = sys.argv[1]
+    if period not in ['monthly', 'weekly']:
+        print(f'Specify correct period name: {sys.argv[0]} <monthly|weekly>')
+        sys.exit(1)
 
     ev = oaf.get_conf()
     filename = oaf.get_hdf_filename(ev)
+    infra = ev['openstack_host']
     print(80 * '=')
-    print('Filename:', filename)
+    print('Input hdf filename:', filename)
+    # Control file for the date
+    date_ctl = ev['out_dir'] + '/' + period + '-ctl'
+
+
     hourdt = 3600 / ev['delta_time']
     my_ini = datetime.datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
     # my_ini = datetime.datetime(2020, 7, 1, 0, 0, 0)
