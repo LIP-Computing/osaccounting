@@ -43,24 +43,26 @@ if __name__ == '__main__':
     date_ini = datetime(year_ini, month_ini, day_ini, 0, 0, 0)
     last_day = datetime.now()-timedelta(1)
     date_end = datetime(last_day.year, last_day.month, last_day.day, 23, 59, 59)
-
+    day_ini = date_ini
+    str_date = ''
     with h5py.File(filename, 'r') as f:
-        while (my_ini <= last_month):
-            fname = ev['out_dir'] + '/' + 'cloud-monthly-' + str(my_ini.year) + '-'
-            fname = fname + '{:02d}'.format(my_ini.month) + '.csv'
-            print(80*'+')
-            my_end = my_ini + relativedelta(months=+1)
-
-            ti = oaf.to_secepoc(my_ini)
-            tf = oaf.to_secepoc(my_end)
+        while (day_ini <= date_end):
+            str_year = str(day_ini.year)
+            str_month = '{:02d}'.format(day_ini.month)
+            str_day = '{:02d}'.format(day_ini.day)
+            str_date = str_year + '-' + str_month + '-' + str_day
+            fname = ev['out_dir'] + '/' + 'cloud-' + str_date + '.csv'
+            day_end = datetime(day_ini.year, day_ini.month, day_ini.day, 23, 59, 59)
+            ti = oaf.to_secepoc(day_ini)
+            tf = oaf.to_secepoc(day_end)
             ts = f['date'][:]
             idx_start = oaf.time2index(ev, ti, ts)
             idx_end = oaf.time2index(ev, tf, ts)
-            print(my_ini, my_end)
-            print(ti, tf)
-            print(idx_start, idx_end)
-            my_ini = my_end
 
+            print(80*'+')
+            print(f'Date: {day_ini} -> {day_end}')
+            print(f'Date epoc: {ti} -> {tf}')
+            print(f'HDF5 date index: {idx_start} -> {idx_end}')
             with open(fname, 'w') as fout:
                 hdrline = 'project'
                 for mtr in oaf.METRICS:
@@ -82,3 +84,8 @@ if __name__ == '__main__':
                         csvline = csvline + ',' + str(summtr)
 
                     fout.write(csvline + '\n')
+
+            day_ini = day_end
+
+    with open(date_ctl, 'w', encoding='utf-8') as fctl:
+        fctl.write(str_date)
