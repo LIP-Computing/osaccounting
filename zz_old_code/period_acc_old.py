@@ -30,24 +30,20 @@ if __name__ == '__main__':
             date_ini = fctl.read()
             print(f'Last accounting date: {date_ini}')
     else:
-        dum_ini = datetime.datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
+        date_ini = datetime.datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
 
     hourdt = 3600 / ev['delta_time']
-    today = datetime.datetime.now()
-    last_day = today.day - 1
 
     my_ini = datetime.datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
     last_month = datetime.datetime.now()
     last_month = last_month + relativedelta(months=-1)
     last_month = last_month + relativedelta(day=31)
-
     with h5py.File(filename, 'r') as f:
         while (my_ini <= last_month):
             fname = ev['out_dir'] + '/' + 'cloud-monthly-' + str(my_ini.year) + '-'
             fname = fname + '{:02d}'.format(my_ini.month) + '.csv'
             print(80*'+')
             my_end = my_ini + relativedelta(months=+1)
-
             ti = oaf.to_secepoc(my_ini)
             tf = oaf.to_secepoc(my_end)
             ts = f['date'][:]
