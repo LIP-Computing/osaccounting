@@ -25,13 +25,20 @@ if __name__ == '__main__':
     print('Input hdf filename:', filename)
     # Control file for the date
     date_ctl = ev['out_dir'] + '/acc_control'
+    year_ini = ev['year_ini']
+    month_ini = ev['month_ini']
+    day_ini = 1
+
     if os.path.isfile(date_ctl):
         with open(date_ctl, 'r', encoding='utf-8') as fctl:
             date_ini = fctl.read()
+            (y_ini, m_ini, d_ini) = date_ini.split('-')
+            year_ini = int(y_ini)
+            month_ini = int(m_ini)
+            day_ini = int(d_ini)
             print(f'Last accounting date: {date_ini}')
-    else:
-        dum_ini = datetime.datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
 
+    date_ini = datetime.datetime(year_ini, month_ini, day_ini, 0, 0, 0)
     hourdt = 3600 / ev['delta_time']
     today = datetime.datetime.now()
     last_day = today.day - 1
