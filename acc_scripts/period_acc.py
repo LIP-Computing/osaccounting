@@ -11,7 +11,7 @@
 
 import sys
 import os
-import datetime
+from datetime import datetime, timedelta
 import h5py
 import osacc_functions as oaf
 from dateutil.relativedelta import *
@@ -21,6 +21,8 @@ if __name__ == '__main__':
     ev = oaf.get_conf()
     filename = oaf.get_hdf_filename(ev)
     infra = ev['openstack_host']
+    hourdt = 3600 / ev['delta_time']
+
     print(80 * '=')
     print('Input hdf filename:', filename)
     # Control file for the date
@@ -38,15 +40,9 @@ if __name__ == '__main__':
             day_ini = int(d_ini)
             print(f'Last accounting date: {date_ini}')
 
-    date_ini = datetime.datetime(year_ini, month_ini, day_ini, 0, 0, 0)
-    hourdt = 3600 / ev['delta_time']
-    today = datetime.datetime.now()
-    last_day = today.day - 1
-
-    my_ini = datetime.datetime(ev['year_ini'], ev['month_ini'], 1, 0, 0, 0)
-    last_month = datetime.datetime.now()
-    last_month = last_month + relativedelta(months=-1)
-    last_month = last_month + relativedelta(day=31)
+    date_ini = datetime(year_ini, month_ini, day_ini, 0, 0, 0)
+    last_day = datetime.now()-timedelta(1)
+    date_end = datetime(last_day.year, last_day.month, last_day.day, 23, 59, 59)
 
     with h5py.File(filename, 'r') as f:
         while (my_ini <= last_month):
