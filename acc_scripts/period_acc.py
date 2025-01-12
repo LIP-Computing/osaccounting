@@ -51,7 +51,7 @@ if __name__ == '__main__':
             str_month = '{:02d}'.format(day_ini.month)
             str_day = '{:02d}'.format(day_ini.day)
             str_date = str_year + '-' + str_month + '-' + str_day
-            fname = ev['out_dir'] + '/' + 'cloud-' + str_date + '.csv'
+            fname = ev['out_dir'] + '/' + 'cloud-' + infra + '-' + str_date + '.csv'
             day_end = datetime(day_ini.year, day_ini.month, day_ini.day, 23, 59, 59)
             ti = oaf.to_secepoc(day_ini)
             tf = oaf.to_secepoc(day_end)
