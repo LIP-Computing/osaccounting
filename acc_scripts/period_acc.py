@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
                     fout.write(csvline + '\n')
 
-            day_ini = day_end
+            day_ini = day_ini + timedelta(1)
 
     with open(date_ctl, 'w', encoding='utf-8') as fctl:
         fctl.write(str_date)
