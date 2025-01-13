@@ -9,12 +9,10 @@
 """Monthly resource usage for all projects
 """
 
-import sys
 import os
 from datetime import datetime, timedelta
 import h5py
 import osacc_functions as oaf
-from dateutil.relativedelta import *
 
 
 if __name__ == '__main__':
@@ -63,7 +61,7 @@ if __name__ == '__main__':
             print(f'Date: {day_ini} -> {day_end}')
             print(f'Date epoc: {ti} -> {tf}')
             print(f'HDF5 date index: {idx_start} -> {idx_end}')
-            with open(fname, 'w') as fout:
+            with open(fname, 'w', encoding='utf-8') as fout:
                 hdrline = 'project'
                 for mtr in oaf.METRICS:
                     hdrline = hdrline + ',' + mtr + '*hour'
