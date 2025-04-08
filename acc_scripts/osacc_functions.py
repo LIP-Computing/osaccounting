@@ -29,7 +29,7 @@ def get_conf():
     """Get configuration options
     :returns dictionary with configuration options
     """
-    parser = configparser.SafeConfigParser(allow_no_value=True)
+    parser = configparser.ConfigParser(allow_no_value=True)
     parser.read('/etc/osacc.conf')
     ev = {}
     ev['out_dir'] = parser.get('DEFAULT', 'OUT_DIR')
