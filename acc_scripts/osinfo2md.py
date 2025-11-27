@@ -93,7 +93,7 @@ if __name__ == '__main__':
     hdruser = '\n\n### Users\n| **Created** | **email** | **Name** |\n'
     hdruser = hdruser + '| - | - | - |\n'
 
-    hdrres = '\n\n### Resources\n| **Total VCPUs** | **Total RAM (GB)** | **Total Public IPs** | **Total Storage (GB)** | **Total instances |\n'
+    hdrres = '\n\n### Resources\n| **Total VCPUs** | **Total RAM (GB)** | **Total Public IPs** | **Total Storage (GB)** | **Total instances** |\n'
     hdrres = hdrres + '| - | - | - | - | - |\n'
 
     hdrserver = '\n\n### VMs\n| **Created** | **Hostname** | **Description** | **VCPUs** | **RAM (GB)** | **Fixed IP** | **Public IP** |\n'
