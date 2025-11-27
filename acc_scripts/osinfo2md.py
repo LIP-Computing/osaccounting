@@ -93,8 +93,8 @@ if __name__ == '__main__':
     hdruser = '\n\n### Users\n| **Created** | **email** | **Name** |\n'
     hdruser = hdruser + '| - | - | - |\n'
 
-    hdrres = '\n\n### Resources\n| **Total VCPUs** | **Total RAM (GB)** | **Total Public IPs** | **Total Storage (GB)**|\n'
-    hdrres = hdrres + '| - | - | - | - |\n'
+    hdrres = '\n\n### Resources\n| **Total VCPUs** | **Total RAM (GB)** | **Total Public IPs** | **Total Storage (GB)** | **Total instances |\n'
+    hdrres = hdrres + '| - | - | - | - | - |\n'
 
     hdrserver = '\n\n### VMs\n| **Created** | **Hostname** | **Description** | **VCPUs** | **RAM (GB)** | **Fixed IP** | **Public IP** |\n'
     hdrserver = hdrserver + '| - | - | - | - | - | - | - |\n'
@@ -102,12 +102,13 @@ if __name__ == '__main__':
     hdrvol = '\n\n### Volumes\n| **Created** | **Name** | **Size (GB)** | **Type** | **Status** | **Cinder ID** |\n'
     hdrvol = hdrvol + '| - | - | - | - | - | - |\n'
 
-    resource_str = 'project,vcpus,stor,memory,ips\n'
+    resource_str = 'project,vcpus,stor,memory,ips,instances\n'
     res_str = ''
     tvcpus = 0
     tram = 0
     tips = 0
     tstor = 0
+    tinst = 0
 
     for project in data:
         md = md + '\n## Project: ' + project['project_name'] + '\n\n'
@@ -125,8 +126,9 @@ if __name__ == '__main__':
             md = md + rowuser
 
         md = md + hdrres
+        tinst = len(project['servers'])
         rawres = '| ' + str(project['tot_nvcpus']) + ' | ' + str(project['tot_ram_gb']) + ' | '
-        rawres = rawres + str(project['tot_npub_ips']) + ' | ' + str(project['tot_stor']) + ' |\n'
+        rawres = rawres + str(project['tot_npub_ips']) + ' | ' + str(project['tot_stor']) + ' | ' + str(tinst) + ' |\n'
         md = md + rawres
 
         md = md + '\n'
@@ -166,6 +168,7 @@ if __name__ == '__main__':
         tram += project['tot_ram_gb']
         tips += project['tot_npub_ips']
         tstor += project['tot_stor']
+        tinst += 1
 
     header = f'# Projects information for {osinfra}\n\n'
     md = header + md
@@ -174,7 +177,7 @@ if __name__ == '__main__':
     with open(mdfile, 'w', encoding='utf-8') as fd:
         fd.write(md)
 
-    resource_str += 'total_used' + ',' + str(tvcpus) + ',' + str(tstor) + ',' + str(tram) + ',' + str(tips) + '\n'
+    resource_str += 'total_used' + ',' + str(tvcpus) + ',' + str(tstor) + ',' + str(tram) + ',' + str(tips) + ',' + str(tinst) + '\n'
     resource_str += res_str
     with open(rescsv, 'w', encoding='utf-8') as fd:
         fd.write(resource_str)
