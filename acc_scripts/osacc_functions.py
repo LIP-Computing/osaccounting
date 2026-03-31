@@ -56,6 +56,8 @@ def get_conf():
         ev['dbuser'] = parser.get('influxdb', 'DBUSER')
         ev['dbpass'] = parser.get('influxdb', 'DBPASS')
         ev['dbname'] = parser.get('influxdb', 'DBNAME')
+        ev['dbtoken'] = parser.get('influxdb', 'DBTOKEN')
+        ev['dborg'] = parser.get('influxdb', 'DBORG')
         ev['ssl'] = parser.getboolean('influxdb', 'SSL')
         ev['verify_ssl'] = parser.getboolean('influxdb', 'VERIFY_SSL')
 
