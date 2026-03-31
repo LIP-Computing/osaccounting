@@ -61,18 +61,24 @@ if __name__ == '__main__':
     bssl = ev['ssl']
     bverify_ssl = ev['verify_ssl']
     baseurl = f'https://{dbhost}:{dbport}'
+    wrt_opt = WriteOptions(batch_size=5000,
+                           flush_interval=10_000,
+                           jitter_interval=2_000,
+                           retry_interval=5_000,
+                           max_retries=5,
+                           max_retry_delay=30_000,
+                           exponential_base=2)
 
     filename = oaf.get_hdf_filename(ev)
     print(80 * '=')
     print('Filename:', filename)
-    lpoints = []
     with h5py.File(filename, 'r') as f:
         tf = f.attrs['LastRun']
         ts = f['date'][:]
         len_ds = len(ts)
         print(f'Last run timestamp: {tf} - number of ts points: {len_ds}')
-        data_met = []
         for group in f:
+            lpoints = []
             print(group)
             if group == "date":
                 continue
@@ -101,19 +107,7 @@ if __name__ == '__main__':
 
                 lpoints.append(point)
 
-    wrt_opt = WriteOptions(batch_size=5000,
-                           flush_interval=10_000,
-                           jitter_interval=2_000,
-                           retry_interval=5_000,
-                           max_retries=5,
-                           max_retry_delay=30_000,
-                           exponential_base=2)
-
-    with InfluxDBClient(url=baseurl, token=dbtoken,
-                        org=dborg, ssl=bssl,
-                        verify_ssl=bverify_ssl) as client:
-        callback = BatchingCallback()
-        with client.write_api(success_callback=callback.success,
-                              error_callback=callback.error,
-                              retry_callback=callback.retry) as write_api:
-            write_api.write(bucket="openstack", record=lpoints, write_precision=WritePrecision.S)
+            with InfluxDBClient(url=baseurl, token=dbtoken, org=dborg, ssl=bssl, verify_ssl=bverify_ssl) as client:
+                bcb = BatchingCallback()
+                with client.write_api(success_callback=bcb.success, error_callback=bcb.error, retry_callback=bcb.retry) as write_api:
+                    write_api.write(bucket="openstack", record=lpoints, write_precision=WritePrecision.S)
