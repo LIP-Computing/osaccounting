@@ -8,11 +8,8 @@
 #
 """Send metric to influxdb
 """
-import os
-import dateutil.parser
 import h5py
-from datetime import datetime
-from pprint import pprint
+from datetime import datetime, timedelta
 from influxdb_client import InfluxDBClient, Point, WritePrecision, WriteOptions
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.client.exceptions import InfluxDBError
@@ -30,30 +27,7 @@ class BatchingCallback(object):
         print(f"Retryable error occurs for batch: {conf} retry: {exception} - number of data points: {len(data)}")
 
 
-def get_last(ev, group):
-    """Get last metric timestamp from DB
-    :param ev: Configuration options list
-    :param client: InfluxDB client
-    :param group: project
-    :return (datetime) last timestamp in seconds to epoc
-    """
-    # qry_str = 'SELECT last(vcpus) FROM cloud_acc WHERE project=$proj'
-    # bind_params = {'proj': group}
-    # last_ts = client.query(qry_str, bind_params=bind_params)
-    # if last_ts:
-    #     time_stamp = last_ts.get_points()
-    #     for t in time_stamp:
-    #         a = dateutil.parser.parse(t["time"])
-    #         ti = oaf.to_secepoc(a)
-
-    # dt_ini = datetime(2026, 3, 30, 13, 0, 0)
-
-    ti = ev['secepoc_ini']
-    return ti
-
-
-if __name__ == '__main__':
-    ev = oaf.get_conf()
+def write_influx(ev, lpts):
     dbhost = ev['dbhost']
     dbport = ev['dbport']
     dbtoken = ev['dbtoken']
@@ -69,9 +43,21 @@ if __name__ == '__main__':
                            max_retry_delay=30_000,
                            exponential_base=2)
 
+    with InfluxDBClient(url=baseurl, token=dbtoken, org=dborg, ssl=bssl, verify_ssl=bverify_ssl) as client:
+        bcb = BatchingCallback()
+        with client.write_api(success_callback=bcb.success, error_callback=bcb.error, retry_callback=bcb.retry) as write_api:
+            write_api.write(bucket="openstack", record=lpts, write_precision=WritePrecision.S)
+
+
+if __name__ == '__main__':
+    ev = oaf.get_conf()
     filename = oaf.get_hdf_filename(ev)
-    print(80 * '=')
-    print('Filename:', filename)
+    # ti = ev['secepoc_ini']
+    # dt_ini = datetime(2026, 3, 31, 3, 0, 0)
+    dt_ini = datetime.today() - timedelta(hours=2)
+    ti = oaf.to_secepoc(dt_ini)
+    print(80 * '_')
+    print(f'Filename: {filename} - From date {dt_ini} - Seconds to epoch: {ti}')
     with h5py.File(filename, 'r') as f:
         tf = f.attrs['LastRun']
         ts = f['date'][:]
@@ -83,7 +69,6 @@ if __name__ == '__main__':
             if group == "date":
                 continue
 
-            ti = get_last(ev, group)
             idx_start = oaf.time2index(ev, ti, ts)
             idx_end = oaf.time2index(ev, tf, ts)
             print(20*'+')
@@ -107,7 +92,4 @@ if __name__ == '__main__':
 
                 lpoints.append(point)
 
-            with InfluxDBClient(url=baseurl, token=dbtoken, org=dborg, ssl=bssl, verify_ssl=bverify_ssl) as client:
-                bcb = BatchingCallback()
-                with client.write_api(success_callback=bcb.success, error_callback=bcb.error, retry_callback=bcb.retry) as write_api:
-                    write_api.write(bucket="openstack", record=lpoints, write_precision=WritePrecision.S)
+            write_influx(ev, lpoints)
