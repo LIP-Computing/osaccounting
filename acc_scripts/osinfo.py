@@ -65,9 +65,7 @@ osinfo_json =
 ]
 """
 import sys
-import os.path
 import json
-import csv
 import osacc_functions as oaf
 
 
@@ -213,33 +211,11 @@ def get_storage(prj_id):
     return volume_list
 
 
-def get_users(prj_id, proj_name):
+def get_users(prj_id):
     """ Get list with information of all users for a given proj_id
     :return list with user information
     """
     usr_list = []
-
-    # Users not created in keystone - This will be deprecated in the future
-    ev = oaf.get_conf()
-    ufiledir = ev['ufile_dir']
-    fileuser = ufiledir + "/" + "users-stratus-disabled.csv"
-    if os.path.isfile(fileuser):
-        with open(fileuser, encoding='utf-8') as csv_file:
-            csv_reader = csv.DictReader(csv_file, delimiter=',')
-            line_count = 0
-            for row in csv_reader:
-                info = create_user()
-                if line_count == 0:
-                    line_count += 1
-                if row["Project"] == proj_name:
-                    info["username"] = row["Name"]
-                    info["email"] = row["Email"]
-                    info["description"] = row["Description"]
-                    info["created"] = False
-                    line_count += 1
-                    usr_list.append(info)
-
-    # Users created in keystone
     assign_info = ["actor_id", "target_id", "role_id"]
     assign_str = "actor_id,target_id,role_id"
     query = f'SELECT {assign_str} FROM assignment WHERE target_id=\"{prj_id}\"'
@@ -292,7 +268,7 @@ if __name__ == '__main__':
         proj_info["servers"] = server_list
         vol_list = get_storage(proj_info["project_id"])
         proj_info["storage"] = vol_list
-        user_list = get_users(proj_info["project_id"], proj_info["project_name"])
+        user_list = get_users(proj_info["project_id"])
         proj_info["users"] = user_list
 
         for server in server_list:
